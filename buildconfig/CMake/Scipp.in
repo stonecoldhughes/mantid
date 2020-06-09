@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.13)
+
+project(scipp-download NONE)
+
+include(ExternalProject)
+
+externalproject_add(
+  scipp-neutron
+  GIT_REPOSITORY https://github.com/scipp/scipp.git 
+  GIT_TAG origin/master
+  SOURCE_DIR "${CMAKE_BINARY_DIR}/scipp-src"
+  BINARY_DIR "${CMAKE_BINARY_DIR}/scipp-build"
+  CONFIGURE_COMMAND ""
+  CMAKE_ARGS -D"${CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  TEST_COMMAND ""
+)

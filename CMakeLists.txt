@@ -158,6 +158,11 @@ if(ENABLE_WORKBENCH)
   find_package(SIP REQUIRED)
   separate_arguments(PYQT5_SIP_FLAGS)
 endif()
+  
+option(ENABLE_SCIPP "Enable scipp for use with Mantid. Build from source in configuration step and install as python package." OFF)
+if(ENABLE_SCIPP)
+  include(scipp)
+endif()
 
 # Now add in all the components
 
