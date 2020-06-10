@@ -211,6 +211,11 @@ def deploy_python_framework(destination, host_python_exe,
   FileUtils.mkdir bundle_site_packages
   copy_selection_recursive(bundled_packages, src_site_packages,
                            bundle_site_packages)
+  
+  if(File.directory?('bin/scipp'))
+    copy_selection_recursive(['scipp'], 'bin/',
+                           bundle_site_packages)
+  end
   make_writable(bundle_site_packages)
 
   # fix mpl_toolkit if it is missing __init__

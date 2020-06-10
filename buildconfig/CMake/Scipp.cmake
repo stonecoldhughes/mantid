@@ -18,7 +18,7 @@ execute_process(
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/scipp-download
 )
 if(result)
-  message(FATAL_ERROR "Build step for scipp failed: ${result}")
+  message(FATAL_ERROR "Download step for scipp failed: ${result}")
 endif()
 
 # Note will build is in Release mode
