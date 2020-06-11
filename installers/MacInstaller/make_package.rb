@@ -61,7 +61,10 @@ BUNDLED_PY_MODULES_COMMON = [
   'urllib3',
   'wcwidth',
   'yaml',
-  'zmq'
+  'zmq',
+  'appdirs.py',
+  'config',
+  'ipywidgets'
 ]
 BUNDLED_PY_MODULES_MANTIDPLOT = [
   'PyQt4/__init__.py',
