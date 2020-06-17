@@ -54,7 +54,8 @@ if sys.version_info < (3, 0):
 DEFAULT_SCRIPT_CONTENT += "# import mantid algorithms, numpy and matplotlib" + os.linesep + \
                           "from mantid.simpleapi import *" + os.linesep + \
                           "import matplotlib.pyplot as plt" + os.linesep + \
-                          "import numpy as np" + os.linesep + os.linesep
+                          "import numpy as np" + os.linesep + \
+                          "import scipp as sc" + os.linesep + os.linesep
 
 # Flags defining a standard Window
 WINDOW_STANDARD_FLAGS = Qt.WindowFlags(Qt.Window)
