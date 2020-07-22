@@ -97,6 +97,7 @@ class FittingTabPresenter(object):
     def handle_new_data_loaded(self):
         self.manual_selection_made = False
         self.update_selected_workspace_list_for_fit()
+        self.model.create_ws_fit_function_map()
 
     def handle_gui_changes_made(self, changed_values):
         for key in changed_values.keys():
@@ -431,8 +432,8 @@ class FittingTabPresenter(object):
             if self.manual_selection_made:
                 return  # if it is a manual selection then the data should not change
             self.update_fit_specifier_list()
-        else:
-            self.selected_data = self.get_workspace_selected_list()
+
+        self.selected_data = self.get_workspace_selected_list()
 
     def get_workspace_selected_list(self):
         if self.context._frequency_context is not None:
@@ -464,7 +465,7 @@ class FittingTabPresenter(object):
         elif self.view.simultaneous_fit_by == "Group/Pair":
             simul_choices = self._get_selected_groups_and_pairs()
         else:
-            simul_choices = self.selected_data
+            simul_choices = []
 
         self.view.setup_fit_by_specifier(simul_choices)
 
