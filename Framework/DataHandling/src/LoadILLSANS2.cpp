@@ -23,8 +23,6 @@
 #include "MantidKernel/UnitFactory.h"
 #include "MantidKernel/VectorHelper.h"
 
-#include <H5Cpp.h>
-
 namespace Mantid {
 namespace DataHandling {
 
@@ -51,7 +49,7 @@ const std::string LoadILLSANS2::category() const {
 
 /// Algorithm's summary for use in the GUI and help. @see Algorithm::summary
 const std::string LoadILLSANS2::summary() const {
-  return "This is a mock loader for grasp simulated D22 nexus files.";
+  return "This is a mock loader for grasp simulated D22 hdf files.";
 }
 
 //----------------------------------------------------------------------------------------------
@@ -104,27 +102,56 @@ void LoadILLSANS2::exec() {
   H5File h5file(filename, H5F_ACC_RDONLY);
   DataSet dataset = h5file.openDataSet("/entry0/data/data");
   DataSpace dataspace = dataset.getSpace();
-  int rank = dataspace.getSimpleExtentNdims();
-  hsize_t dims_out[2];
-  int ndims = dataspace.getSimpleExtentDims(dims_out, NULL);
   hsize_t dimsm[3]; /* memory space dimensions */
   dimsm[0] = NX;
   dimsm[1] = NY;
   dimsm[2] = NZ;
   DataSpace memspace(RANK_OUT, dimsm);
   dataset.read(data_out, PredType::NATIVE_INT, memspace, dataspace);
-  MatrixWorkspace_sptr ws = createEmptyWorkspace(NX*NY+1, 1);
+  MatrixWorkspace_sptr ws = createEmptyWorkspace(NX * NY + 1, 1);
   std::vector<std::vector<double>> data2D;
-  data2D = std::vector<std::vector<double>>(
-        NX, std::vector<double>(NY, 0.));
+  data2D = std::vector<std::vector<double>>(NX, std::vector<double>(NY, 0.));
   for (i = 0; i < NX; i++) {
     for (j = 0; j < NY; j++) {
-        data2D[i][j] = data_out[i][j][0];
+      data2D[i][j] = data_out[i][j][0];
     }
   }
-  loadData(data2D, ws);
+  double lambda = getScalarEntry(h5file, "/entry0/d22/selector/wavelength");
+  loadData(data2D, ws, lambda);
   runLoadInstrument(ws);
+  double l2 = getScalarEntry(h5file, "/entry0/d22/detector/det_calc");
+  moveDetectorDistance(l2, ws, "detector");
+  double timer = getScalarEntry(h5file, "/entry0/duration");
+  ws->mutableRun().addProperty<double>("timer", timer, true);
+  setPixelSize(ws);
   setProperty("OutputWorkspace", ws);
+}
+
+double LoadILLSANS2::getScalarEntry(H5File &h5file, const std::string &entry) {
+  DataSet ds = h5file.openDataSet(entry);
+  DataSpace dspace = ds.getSpace();
+  hsize_t dims[1] = {1};
+  DataSpace memspace(1, dims);
+  double value[1] = {0};
+  ds.read(value, PredType::NATIVE_DOUBLE, memspace, dspace);
+  return *value;
+}
+
+void LoadILLSANS2::moveDetectorDistance(double distance,
+                                        API::MatrixWorkspace_sptr ws,
+                                        const std::string &componentName) {
+
+  API::IAlgorithm_sptr mover = createChildAlgorithm("MoveInstrumentComponent");
+  V3D pos = getComponentPosition(ws, componentName);
+  mover->setProperty<API::MatrixWorkspace_sptr>("Workspace", ws);
+  mover->setProperty("ComponentName", componentName);
+  mover->setProperty("X", pos.X());
+  mover->setProperty("Y", pos.Y());
+  mover->setProperty("Z", distance);
+  mover->setProperty("RelativePosition", false);
+  mover->executeAsChildAlg();
+  API::Run &runDetails = ws->mutableRun();
+  runDetails.addProperty<double>("L2", distance, true);
 }
 
 MatrixWorkspace_sptr
@@ -139,13 +166,12 @@ LoadILLSANS2::createEmptyWorkspace(const size_t numberOfHistograms,
 }
 
 void LoadILLSANS2::loadData(const std::vector<std::vector<double>> &data,
-                            MatrixWorkspace_sptr ws) {
+                            MatrixWorkspace_sptr ws, const double lambda) {
   const int NX = 128;
   const int NY = 256;
   std::vector<double> binning(2, 0);
-  const double wavelength = 6.;
-  binning[0] = wavelength - 0.1 * wavelength;
-  binning[1] = wavelength + 0.1 * wavelength;
+  binning[0] = lambda - 0.1 * lambda;
+  binning[1] = lambda + 0.1 * lambda;
   const HistogramData::BinEdges binEdges(binning);
 
   PARALLEL_FOR_IF(Kernel::threadSafe(*ws))
@@ -167,6 +193,31 @@ void LoadILLSANS2::runLoadInstrument(MatrixWorkspace_sptr ws) {
   loadInst->setProperty("RewriteSpectraMap",
                         Mantid::Kernel::OptionalBool(true));
   loadInst->execute();
+}
+
+V3D LoadILLSANS2::getComponentPosition(API::MatrixWorkspace_sptr ws,
+                                       const std::string &componentName) {
+  Geometry::Instrument_const_sptr instrument = ws->getInstrument();
+  Geometry::IComponent_const_sptr component =
+      instrument->getComponentByName(componentName);
+  return component->getPos();
+}
+
+void LoadILLSANS2::setPixelSize(MatrixWorkspace_sptr ws) {
+  const auto instrument = ws->getInstrument();
+  const std::string component = "detector";
+  auto detector = instrument->getComponentByName(component);
+  auto rectangle =
+      std::dynamic_pointer_cast<const Geometry::RectangularDetector>(detector);
+  if (rectangle) {
+    const double dx = rectangle->xstep();
+    const double dy = rectangle->ystep();
+    API::Run &runDetails = ws->mutableRun();
+    runDetails.addProperty<double>("pixel_width", dx);
+    runDetails.addProperty<double>("pixel_height", dy);
+  } else {
+    g_log.debug("No pixel size available");
+  }
 }
 
 } // namespace DataHandling
