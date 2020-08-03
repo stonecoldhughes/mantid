@@ -119,10 +119,30 @@ void LoadILLSANS2::exec() {
   double lambda = getScalarEntry(h5file, "/entry0/d22/selector/wavelength");
   loadData(data2D, ws, lambda);
   runLoadInstrument(ws);
+  ws->mutableRun().addProperty<double>("wavelength", lambda, true);
+  double lambda_res =
+      getScalarEntry(h5file, "/entry0/d22/selector/wavelength_res");
+  ws->mutableRun().addProperty<double>("selector.wavelength_res",
+                                       lambda_res * 100, true);
   double l2 = getScalarEntry(h5file, "/entry0/d22/detector/det_calc");
   moveDetectorDistance(l2, ws, "detector");
+  ws->mutableRun().addProperty<double>("L2", l2, true);
   double timer = getScalarEntry(h5file, "/entry0/duration");
   ws->mutableRun().addProperty<double>("timer", timer, true);
+  double col =
+      getScalarEntry(h5file, "/entry0/d22/collimation/actual_position");
+  ws->mutableRun().addProperty<double>("collimation.actual_position", col,
+                                       true);
+  auto source_size =
+      getTwoScalarEntry(h5file, "/entry0/d22/collimation/source_size");
+  auto sample_size =
+      getTwoScalarEntry(h5file, "/entry0/d22/collimation/sample_size");
+  ws->mutableRun().addProperty<double>("source_width", source_size.first, true);
+  ws->mutableRun().addProperty<double>("source_height", source_size.second,
+                                       true);
+  ws->mutableRun().addProperty<double>("sample_width", sample_size.first, true);
+  ws->mutableRun().addProperty<double>("sample_height", sample_size.second,
+                                       true);
   setPixelSize(ws);
   setProperty("OutputWorkspace", ws);
 }
@@ -135,6 +155,17 @@ double LoadILLSANS2::getScalarEntry(H5File &h5file, const std::string &entry) {
   double value[1] = {0};
   ds.read(value, PredType::NATIVE_DOUBLE, memspace, dspace);
   return *value;
+}
+
+std::pair<double, double>
+LoadILLSANS2::getTwoScalarEntry(H5File &h5file, const std::string &entry) {
+  DataSet ds = h5file.openDataSet(entry);
+  DataSpace dspace = ds.getSpace();
+  hsize_t dims[1] = {2};
+  DataSpace memspace(1, dims);
+  double value[2] = {0., 0.};
+  ds.read(value, PredType::NATIVE_DOUBLE, memspace, dspace);
+  return std::make_pair(value[0], value[1]);
 }
 
 void LoadILLSANS2::moveDetectorDistance(double distance,

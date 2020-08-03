@@ -38,6 +38,7 @@ private:
   API::MatrixWorkspace_sptr createEmptyWorkspace(const size_t, const size_t);
   void runLoadInstrument(API::MatrixWorkspace_sptr);
   double getScalarEntry(H5::H5File &, const std::string &entry);
+  std::pair<double, double> getTwoScalarEntry(H5::H5File &, const std::string &entry);
   void moveDetectorDistance(double, API::MatrixWorkspace_sptr,
                             const std::string &);
   Kernel::V3D getComponentPosition(API::MatrixWorkspace_sptr, const std::string &componentName);
