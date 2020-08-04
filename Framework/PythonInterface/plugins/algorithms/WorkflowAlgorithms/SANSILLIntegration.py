@@ -341,6 +341,21 @@ class SANSILLIntegration(PythonAlgorithm):
             else:
                 self._deltaQ = MonochromaticScalarQCylindric(wavelength, delta_wavelength, r1, r2, x3, y3, l1, l2)
 
+    def _setup_mildner_carpenter_2(self):
+        run = mtd[self._input_ws].getRun()
+        wavelength = run.getLogData('wavelength').value
+        l1 = run.getLogData('collimation.actual_position').value
+        l2 = run.getLogData('L2').value
+        x3 = run.getLogData('pixel_width').value
+        y3 = run.getLogData('pixel_height').value
+        delta_wavelength = run.getLogData('selector.wavelength_res').value
+        # assuming rectangular
+        x1 = run.getLogData('source_width').value
+        y1 = run.getLogData('source_height').value
+        x2 = run.getLogData('sample_width').value
+        y2 = run.getLogData('sample_height').value
+        self._deltaQ = MonochromaticScalarQCartesian(wavelength, delta_wavelength, x1, y1, x2, y2, x3, y3, l1, l2)
+
     def _integrate_iqxy(self, ws_in, ws_out):
         """
         Calls Qxy
@@ -355,7 +370,7 @@ class SANSILLIntegration(PythonAlgorithm):
         Produces I(Q) or I(Phi,Q) using Q1DWeighted
         """
         if self._resolution == 'MildnerCarpenter':
-            self._setup_mildner_carpenter()
+            self._setup_mildner_carpenter_2()
         run = mtd[ws_in].getRun()
         q_min = run.getLogData('qmin').value
         q_max = run.getLogData('qmax').value

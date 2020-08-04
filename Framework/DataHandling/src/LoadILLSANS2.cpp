@@ -123,7 +123,7 @@ void LoadILLSANS2::exec() {
   double lambda_res =
       getScalarEntry(h5file, "/entry0/d22/selector/wavelength_res");
   ws->mutableRun().addProperty<double>("selector.wavelength_res",
-                                       lambda_res * 100, true);
+                                       lambda_res, true);
   double l2 = getScalarEntry(h5file, "/entry0/d22/detector/det_calc");
   moveDetectorDistance(l2, ws, "detector");
   ws->mutableRun().addProperty<double>("L2", l2, true);
