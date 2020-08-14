@@ -397,13 +397,20 @@ class IndirectILLEnergyTransfer(PythonAlgorithm):
                 _extract_workspace(self._ws, left, 0, int(size/2))
                 _extract_workspace(self._ws, right, int(size/2), size)
                 DeleteWorkspace(self._ws)
-                self._reduce_one_wing_doppler(left)
-                self._reduce_one_wing_doppler(right)
+
+                xmin_left, xmax_left = self._find_monitor_range_normalize(left)
+                xmin_right, xmax_right = self._find_monitor_range_normalize(right)
+                xmin = min(xmin_left, xmin_right)
+                xmax = min(xmax_left, xmax_right)
+
+                self._reduce_one_wing_doppler(left, xmin, xmax)
+                self._reduce_one_wing_doppler(right, xmin, xmax)
                 GroupWorkspaces(InputWorkspaces=[left,right],OutputWorkspace=self._red_ws)
 
             elif self._mirror_sense == 16:    # one wing
+                xmin, xmax = self._find_monitor_range_normalize(self._ws)
 
-                self._reduce_one_wing_doppler(self._ws)
+                self._reduce_one_wing_doppler(self._ws, xmin, xmax)
                 GroupWorkspaces(InputWorkspaces=[self._ws],OutputWorkspace=self._red_ws)
 
         if self._normalise_to == 'Monitor':
@@ -648,23 +655,11 @@ class IndirectILLEnergyTransfer(PythonAlgorithm):
         else:
             self._group_detectors_with_range(ws)
 
-    def _reduce_one_wing_doppler(self, ws):
+    def _reduce_one_wing_doppler(self, ws, xmin, xmax):
         """
         Reduces given workspace in doppler mode assuming it is one wing already
         @param ws :: input workspace name
         """
-
-        mon = '__mon_'+ws
-
-        ExtractSingleSpectrum(InputWorkspace=ws, OutputWorkspace=mon, WorkspaceIndex=0)
-
-        if self._group_detectors:
-            self._do_group_detectors(ws)
-
-        xmin, xmax = self._monitor_zero_range(mon)
-
-        if self._normalise_to == 'Monitor':
-            self._normalise_to_monitor(ws, mon)
 
         if self._reduction_type == 'QENS':
             if self._dead_channels:
@@ -672,8 +667,6 @@ class IndirectILLEnergyTransfer(PythonAlgorithm):
                 ScaleX(InputWorkspace=ws, OutputWorkspace=ws, Factor=-float(xmin), Operation='Add')
             else:
                 self._mask(ws, xmin, xmax)
-
-        DeleteWorkspace(mon)
 
         self._convert_to_energy(ws)
 
@@ -688,6 +681,28 @@ class IndirectILLEnergyTransfer(PythonAlgorithm):
         if self._spectrum_axis != 'SpectrumNumber':
             ConvertSpectrumAxis(InputWorkspace=ws,OutputWorkspace=ws,
                                 EMode='Indirect',Target=target,EFixed=self._efixed)
+
+    def _find_monitor_range_normalize(self, ws):
+        """
+        Find the range of non-zero values on the given monitor and normalize to monitor if asked.
+        @param ws :: input workspace name
+        """
+        mon = '__mon_' + ws
+
+        ExtractSingleSpectrum(InputWorkspace=ws, OutputWorkspace=mon, WorkspaceIndex=0)
+
+        if self._group_detectors:
+            self._do_group_detectors(ws)
+
+        xmin, xmax = self._monitor_zero_range(mon)
+
+        if self._normalise_to == 'Monitor':
+            self._normalise_to_monitor(ws, mon)
+
+        DeleteWorkspace(mon)
+
+        return xmin, xmax
+
 
     def _group_detectors_with_range(self, ws):
         """
