@@ -47,7 +47,7 @@ def chopperOpeningAngle(sampleLogs, instrumentName):
             chopper1Phase = sampleLogs.getProperty('VirtualChopper.chopper2_speed_average').value
         chopper2Phase = sampleLogs.getProperty('VirtualChopper.chopper2_phase_average').value
         openoffset = sampleLogs.getProperty('VirtualChopper.open_offset').value
-        return 45. - (chopper2Phase - chopper1Phase) - openoffset
+        return 20. - (chopper2Phase - chopper1Phase) - openoffset
     else:
         firstChopper = int(sampleLogs.getProperty('ChopperSetting.firstChopper').value)
         secondChopper = int(sampleLogs.getProperty('ChopperSetting.secondChopper').value)

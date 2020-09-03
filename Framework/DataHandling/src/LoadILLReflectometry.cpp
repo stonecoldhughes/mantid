@@ -540,7 +540,7 @@ std::vector<double> LoadILLReflectometry::getXValues() {
         g_log.error() << "First chopper velocity " << chop1Speed
                       << ". Check you NeXus file.\n";
       }
-      const double chopWindow = 45.0;
+      const double chopWindow = 20.0;
       const double t_TOF2 = m_tofDelay - 1.e+6 * 60.0 *
                                              (POFF - chopWindow + chop2Phase -
                                               chop1Phase + openOffset) /
