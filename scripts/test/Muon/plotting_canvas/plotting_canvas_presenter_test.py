@@ -15,7 +15,7 @@ from Muon.GUI.Common.plot_widget.plotting_canvas.plotting_canvas_presenter impor
 from Muon.GUI.Common.plot_widget.plotting_canvas.plotting_canvas_view_interface import PlottingCanvasViewInterface
 from mantidqt.utils.qt.testing import start_qapplication
 from mantid.simpleapi import CreateWorkspace, AnalysisDataService
-
+#from Muon.GUI.Common.plot_widget.plotting_canvas.plot_toolbar import PlotToolbar
 
 def create_test_plot_information(name, index, axis, normalised, errors, label):
     return WorkspacePlotInformation(workspace_name=name, index=index, axis=axis,
@@ -37,6 +37,7 @@ class PlottingCanvasPresenterTest(unittest.TestCase):
 
     def setUp(self):
         self.view = mock.Mock(spec=PlottingCanvasViewInterface)
+        #self.view.toolBar = mock.Mock(spec=PlotToolbar)
         self.model = mock.Mock(spec=PlottingCanvasModel)
         self.figure_options = mock.Mock(spec=QuickEditPresenter)
         self.figure_options.get_selection.return_value = ['1']
