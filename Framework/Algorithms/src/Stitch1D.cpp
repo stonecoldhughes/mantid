@@ -24,6 +24,7 @@
 #include <boost/math/special_functions.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <map>
+#include <sstream>
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
@@ -410,8 +411,16 @@ MatrixWorkspace_sptr Stitch1D::weightedMean(MatrixWorkspace_sptr &inOne,
  */
 MatrixWorkspace_sptr Stitch1D::conjoinXAxis(MatrixWorkspace_sptr &inOne,
                                             MatrixWorkspace_sptr &inTwo) {
-  const std::string in1 = "__Stitch1D_intermediate_workspace_1__";
-  const std::string in2 = "__Stitch1D_intermediate_workspace_2__";
+  std::ostringstream os1;
+  os1 << "__Stitch1D_intermediate_workspace_";
+  os1 << static_cast<void*>(inOne.get());
+  const std::string in1 = os1.str();
+
+  std::ostringstream os2;
+  os2 << "__Stitch1D_intermediate_workspace_";
+  os2 << static_cast<void*>(inTwo.get());
+  const std::string in2 = os2.str();
+
   Mantid::API::AnalysisDataService::Instance().addOrReplace(in1, inOne);
   Mantid::API::AnalysisDataService::Instance().addOrReplace(in2, inTwo);
   auto conjoinX = this->createChildAlgorithm("ConjoinXRuns");
