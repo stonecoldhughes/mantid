@@ -290,10 +290,7 @@ public:
   void testNotifyCopyRowsRequestedInvalid() {
     auto presenter = makePresenter(m_view, twoGroupsWithTwoRowsModel());
 
-    std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const locations =
-        {};
-    setClipboardInitialisedIfLocationsNonEmpty(m_jobs, locations);
-
+    ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(false));
     EXPECT_CALL(m_view, invalidSelectionForCopy());
     presenter.notifyCopyRowsRequested();
 
@@ -303,10 +300,7 @@ public:
   void testNotifyCopyRowsRequestedValid() {
     auto presenter = makePresenter(m_view, twoGroupsWithTwoRowsModel());
 
-    std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const locations = {
-        location(0, 0), location(0, 1), location(0, 2), location(1, 1)};
-    setClipboardInitialisedIfLocationsNonEmpty(m_jobs, locations);
-
+    ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(true));
     EXPECT_CALL(m_jobs, clearSelection());
     presenter.notifyCopyRowsRequested();
 

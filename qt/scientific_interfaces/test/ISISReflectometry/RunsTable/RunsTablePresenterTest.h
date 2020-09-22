@@ -57,7 +57,7 @@ public:
     ON_CALL(mockJobs, selectedRowLocations()).WillByDefault(Return(locations));
   }
 
-  void setClipboardInitialisedIfLocationsNonEmpty(
+  /*void setClipboardInitialisedIfLocationsNonEmpty(
       MantidQt::MantidWidgets::Batch::MockJobTreeView &mockClipboard,
       std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const
           &selectedLocations) {
@@ -66,7 +66,7 @@ public:
     } else {
       ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(false));
     }
-  }
+  }*/
 
   void
   selectedColumnIs(MantidQt::MantidWidgets::Batch::MockJobTreeView &mockJobs,
@@ -90,7 +90,7 @@ public:
 
   RunsTablePresenter makePresenter(IRunsTableView &view, ReductionJobs jobs) {
     auto presenter = RunsTablePresenter(&view, {}, 0.01, std::move(jobs),
-                                        m_clipboardFactory, m_plotter);
+                                        &m_clipboardFactory, m_plotter);
     presenter.acceptMainPresenter(&m_mainPresenter);
     return presenter;
   }
@@ -146,5 +146,5 @@ protected:
   NiceMock<MockRunsPresenter> m_mainPresenter;
   NiceMock<MockPlotter> m_plotter;
   NiceMock<MockClipboard> m_clipboard;
-  MockClipboardFactory *m_clipboardFactory;
+  MockClipboardFactory m_clipboardFactory = MockClipboardFactory();
 };

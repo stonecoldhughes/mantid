@@ -154,6 +154,12 @@ std::vector<MantidQt::MantidWidgets::Batch::RowLocation> &
 Clipboard::mutableSubtreeRoots() {
   return m_subtreeRoots.get();
 }
+bool containsGroups(IClipboard const &clipboard) {
+  if (!clipboard.isInitialized())
+    throw std::runtime_error("Attempted to access invalid value in clipboard");
+
+  return containsGroups(clipboard.subtreeRoots());
+}
 } // namespace ISISReflectometry
 } // namespace CustomInterfaces
 } // namespace MantidQt
