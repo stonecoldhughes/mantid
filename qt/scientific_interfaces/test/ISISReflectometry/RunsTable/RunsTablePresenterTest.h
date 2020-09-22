@@ -10,6 +10,8 @@
 #include "../../../ISISReflectometry/GUI/RunsTable/RunsTablePresenter.h"
 #include "../../../ISISReflectometry/Reduction/Slicing.h"
 #include "../../../ISISReflectometry/TestHelpers/ModelCreationHelper.h"
+#include "../../../test/ISISReflectometry/Common/MockClipboard.h"
+#include "../../../test/ISISReflectometry/Common/MockClipboardFactory.h"
 #include "../ReflMockObjects.h"
 #include "MantidQtWidgets/Common/Batch/MockJobTreeView.h"
 #include "MockRunsTableView.h"
@@ -36,7 +38,7 @@ public:
     ON_CALL(view, jobs()).WillByDefault(::testing::ReturnRef(jobsView));
   }
 
-  RunsTablePresenterTest() : m_jobs(), m_view() {
+  RunsTablePresenterTest() : m_jobs(), m_view(), m_clipboard() {
     jobsViewIs(m_jobs, m_view);
     ON_CALL(m_jobs, cellsAt(_)).WillByDefault(Return(emptyCellsArray()));
   }
@@ -53,6 +55,17 @@ public:
       std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const
           &locations) {
     ON_CALL(mockJobs, selectedRowLocations()).WillByDefault(Return(locations));
+  }
+
+  void setClipboardInitialisedIfLocationsNonEmpty(
+      MantidQt::MantidWidgets::Batch::MockJobTreeView &mockClipboard,
+      std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const
+          &selectedLocations) {
+    if (!selectedLocations.empty()) {
+      ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(true));
+    } else {
+      ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(false));
+    }
   }
 
   void
@@ -77,7 +90,7 @@ public:
 
   RunsTablePresenter makePresenter(IRunsTableView &view, ReductionJobs jobs) {
     auto presenter =
-        RunsTablePresenter(&view, {}, 0.01, std::move(jobs), m_plotter);
+        RunsTablePresenter(&view, {}, 0.01, std::move(jobs), m_clipboardFactory, m_plotter);
     presenter.acceptMainPresenter(&m_mainPresenter);
     return presenter;
   }
@@ -132,4 +145,6 @@ protected:
   NiceMock<MockRunsTableView> m_view;
   NiceMock<MockRunsPresenter> m_mainPresenter;
   NiceMock<MockPlotter> m_plotter;
+  NiceMock<MockClipboard> m_clipboard;
+  MockClipboardFactory *m_clipboardFactory;
 };
