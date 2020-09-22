@@ -314,7 +314,7 @@ public:
   }
 
   void testNotifyCutRowsRequested() {
-      //presenter
+    // presenter
   }
 
   void testNotifyRowOutputsChangedRounding() {

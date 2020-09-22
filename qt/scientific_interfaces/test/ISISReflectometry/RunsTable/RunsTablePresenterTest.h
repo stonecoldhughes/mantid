@@ -89,8 +89,8 @@ public:
   }
 
   RunsTablePresenter makePresenter(IRunsTableView &view, ReductionJobs jobs) {
-    auto presenter =
-        RunsTablePresenter(&view, {}, 0.01, std::move(jobs), m_clipboardFactory, m_plotter);
+    auto presenter = RunsTablePresenter(&view, {}, 0.01, std::move(jobs),
+                                        m_clipboardFactory, m_plotter);
     presenter.acceptMainPresenter(&m_mainPresenter);
     return presenter;
   }

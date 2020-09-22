@@ -126,7 +126,8 @@ void makePastedGroupNamesUnique(
     IClipboard *clipboard,
     std::vector<MantidWidgets::Batch::RowLocation> const &replacementRoots,
     ReductionJobs const &jobs) {
-  for (auto rootIndex = 0; rootIndex < clipboard->numberOfRoots(); ++rootIndex) {
+  for (auto rootIndex = 0; rootIndex < clipboard->numberOfRoots();
+       ++rootIndex) {
     makePastedGroupNamesUnique(clipboard, rootIndex, replacementRoots, jobs);
   }
 }
@@ -134,9 +135,11 @@ void makePastedGroupNamesUnique(
 
 RunsTablePresenter::RunsTablePresenter(
     IRunsTableView *view, std::vector<std::string> const &instruments,
-    double thetaTolerance, ReductionJobs jobs, IClipboardFactory *clipboardFactory, const IPlotter &plotter)
+    double thetaTolerance, ReductionJobs jobs,
+    IClipboardFactory *clipboardFactory, const IPlotter &plotter)
     : m_view(view), m_model(instruments, thetaTolerance, std::move(jobs)),
-      m_clipboardFactory(clipboardFactory), m_clipboard(), m_jobViewUpdater(m_view->jobs()), m_plotter(plotter) {
+      m_clipboardFactory(clipboardFactory), m_clipboard(),
+      m_jobViewUpdater(m_view->jobs()), m_plotter(plotter) {
   m_view->subscribe(this);
 
   // Add Group to view and model, add row to this group in view and model.
@@ -675,8 +678,8 @@ void RunsTablePresenter::notifyRemoveAllRowsAndGroupsRequested() {
 }
 
 void RunsTablePresenter::notifyCopyRowsRequested() {
-  m_clipboard = m_clipboardFactory->createClipboard(m_view->jobs().selectedSubtrees(),
-                          m_view->jobs().selectedSubtreeRoots());
+  m_clipboard = m_clipboardFactory->createClipboard(
+      m_view->jobs().selectedSubtrees(), m_view->jobs().selectedSubtreeRoots());
   if (m_clipboard->isInitialized())
     m_view->jobs().clearSelection();
   else
@@ -692,8 +695,7 @@ void RunsTablePresenter::notifyCutRowsRequested() {
     return;
 
   m_clipboard = m_clipboardFactory->createClipboard(
-      m_view->jobs().selectedSubtrees(),
-                          m_view->jobs().selectedSubtreeRoots());
+      m_view->jobs().selectedSubtrees(), m_view->jobs().selectedSubtreeRoots());
   if (m_clipboard->isInitialized()) {
     removeRowsAndGroupsFromView(selected);
     removeRowsAndGroupsFromModel(selected);
