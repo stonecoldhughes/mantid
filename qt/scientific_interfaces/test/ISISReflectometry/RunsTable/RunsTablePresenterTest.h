@@ -57,17 +57,6 @@ public:
     ON_CALL(mockJobs, selectedRowLocations()).WillByDefault(Return(locations));
   }
 
-  /*void setClipboardInitialisedIfLocationsNonEmpty(
-      MantidQt::MantidWidgets::Batch::MockJobTreeView &mockClipboard,
-      std::vector<MantidQt::MantidWidgets::Batch::RowLocation> const
-          &selectedLocations) {
-    if (!selectedLocations.empty()) {
-      ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(true));
-    } else {
-      ON_CALL(m_clipboard, isInitialized()).WillByDefault(Return(false));
-    }
-  }*/
-
   void
   selectedColumnIs(MantidQt::MantidWidgets::Batch::MockJobTreeView &mockJobs,
                    int columnIndex) {
