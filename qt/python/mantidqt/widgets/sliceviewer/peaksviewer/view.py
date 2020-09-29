@@ -7,16 +7,39 @@
 #  This file is part of the mantid workbench.
 
 # 3rd party imports
+from qtpy.QtCore import QSortFilterProxyModel
 from qtpy.QtWidgets import QGroupBox, QVBoxLayout, QWidget
 
 # local imports
-from mantidqt.widgets.workspacedisplay.table.view import TableWorkspaceDisplayView, QTableWidget
+from mantidqt.widgets.workspacedisplay.table.view import QTableView, TableWorkspaceDisplayView
 
 
-class PeaksWorkspaceTableView(TableWorkspaceDisplayView):
-    """Specialization of a table view to display peaks"""
+class _PeaksWorkspaceTableView(TableWorkspaceDisplayView):
+    """Specialization of a table view to display peaks
+    Designed specifically to be used by PeaksViewerView
+    """
+    def __init__(self, *args, **kwargs):
+        self._key_handler = kwargs.pop('key_handler')
+        TableWorkspaceDisplayView.__init__(self, *args, **kwargs)
+        self.source_model = self.model()
+        self.proxy_model = None
+
     def keyPressEvent(self, event):
-        QTableWidget.keyPressEvent(self, event)
+        """
+        Override base to call handler as part of event
+        """
+        # bypass immediate base class to get standard table arrow key behaviour
+        QTableView.keyPressEvent(self, event)
+        self._key_handler._row_selected()
+
+    def enable_sorting(self):
+        """
+        Turn on column sorting
+        """
+        self.setSortingEnabled(True)
+        self.proxy_model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.source_model)
+        self.setModel(self.proxy_model)
 
 
 class PeaksViewerView(QWidget):
@@ -34,7 +57,6 @@ class PeaksViewerView(QWidget):
         super().__init__(parent)
         self._painter = painter
         self._sliceinfo_provider = sliceinfo_provider
-        self._current_selection = None
         self._group_box = None
         self._presenter = None
         self._table_view = None
@@ -56,9 +78,18 @@ class PeaksViewerView(QWidget):
 
     @property
     def selected_index(self):
-        # cache current selection for checking in mouse click handler
-        self._current_selection = self._selected_index()
-        return self._current_selection
+        return self._selected_index()
+
+    def set_axes_limits(self, xlim, ylim, auto_transform):
+        """
+        Set the view limits on the image axes to the given extents
+        :param xlim: 2-tuple of (xmin, xmax)
+        :param ylim: 2-tuple of (ymin, ymax)
+        :param auto_transform: If True, the limits are transformed into the
+                               rectilinear frame using the transform provided
+                               by the sliceinfo
+        """
+        self._sliceinfo_provider.set_axes_limits(xlim, ylim, auto_transform)
 
     def set_peak_color(self, peak_color):
         """
@@ -94,14 +125,11 @@ class PeaksViewerView(QWidget):
         """
         self._group_box = QGroupBox(self)
         self._group_box.setContentsMargins(0, 0, 0, 0)
-        self._table_view = PeaksWorkspaceTableView(parent=self)
-        self._table_view.setSelectionBehavior(PeaksWorkspaceTableView.SelectRows)
-        self._table_view.setSelectionMode(PeaksWorkspaceTableView.SingleSelection)
-        # itemSelectionChanges handles selection changes from either keyboard/mouse
-        self._table_view.itemSelectionChanged.connect(self._on_row_selection_changed)
-        # the selection might not change when an item is clicked but we want to notify
-        # the outside world
-        self._table_view.itemClicked.connect(self._on_row_clicked)
+        self._table_view = _PeaksWorkspaceTableView(parent=self, key_handler=self)
+        self._table_view.setSelectionBehavior(_PeaksWorkspaceTableView.SelectRows)
+        self._table_view.setSelectionMode(_PeaksWorkspaceTableView.SingleSelection)
+        self._table_view.clicked.connect(self._on_row_clicked)
+        self._table_view.verticalHeader().sectionClicked.connect(self._row_selected)
 
         group_box_layout = QVBoxLayout()
         group_box_layout.addWidget(self._table_view)
@@ -109,12 +137,6 @@ class PeaksViewerView(QWidget):
         widget_layout = QVBoxLayout()
         widget_layout.addWidget(self._group_box)
         self.setLayout(widget_layout)
-
-    def _on_row_selection_changed(self):
-        """
-        Notify that a different peak has been selected. It is assumed only single row selection is allowed
-        """
-        self._presenter.notify(self._presenter.Event.PeakSelected)
 
     def _on_row_clicked(self, _):
         """
@@ -124,16 +146,21 @@ class PeaksViewerView(QWidget):
         selection notification when peak selection changes as _on_row_selection_changed
         handles this.
         """
-        if self._current_selection == self._selected_index():
-            self._presenter.notify(self._presenter.Event.PeakSelected)
+        self._row_selected()
+
+    def _row_selected(self):
+        """
+        Notify that a different peak has been selected. It is assumed only single row selection is allowed
+        """
+        self._presenter.notify(self._presenter.Event.PeakSelected)
 
     def _selected_index(self):
         # construction ensures we can only have 0 or 1 items selected
-        selected = self.table_view.selectedItems()
+        selected = self.table_view.selectedIndexes()
         if not selected:
             return None
 
-        return self.table_view.row(selected[0])
+        return self.table_view.proxy_model.mapToSource(selected[0]).row()
 
 
 class PeaksViewerCollectionView(QWidget):

@@ -516,7 +516,6 @@ target_link_libraries(Kernel
                       ${TBB_LIBRARIES}
                       ${TBB_MALLOC_LIBRARIES}
                       PRIVATE
-                      ${TCMALLOC_LIBRARIES_LINKTIME}
                       ${GSL_LIBRARIES}
                       ${MANTIDLIBS}
                       ${NETWORK_LIBRARIES}
@@ -595,6 +594,7 @@ set(UPDATE_INSTRUMENT_DEFINTITIONS "0")
 set(CHECK_FOR_NEW_MANTID_VERSION "0")
 set(ENABLE_USAGE_REPORTS "0")
 set(PYTHONPLUGIN_DIRS "${MANTID_ROOT}/Framework/PythonInterface/plugins")
+set(PYTHONPLUGIN_MANIFEST "${CMAKE_BINARY_DIR}/Framework/PythonInterface/plugins/python-plugin-manifest.txt")
 set(
   DATADIRS
   ${ExternalData_BINARY_ROOT}/Testing/Data/UnitTest;${ExternalData_BINARY_ROOT}/Testing/Data/DocTest;${MANTID_ROOT}/instrument
@@ -649,6 +649,7 @@ else()
 endif()
 set(FRAMEWORK_PLUGINS_DIR ${MANTID_ROOT}/plugins)
 set(PYTHONPLUGIN_DIRS "${FRAMEWORK_PLUGINS_DIR}/python")
+set(PYTHONPLUGIN_MANIFEST "${PYTHONPLUGIN_DIRS}/python-plugin-manifest.txt")
 if(MAKE_VATES)
   if(APPLE)
     set(PARAVIEW_PYTHON_PATHS "../Libraries;../Python;")

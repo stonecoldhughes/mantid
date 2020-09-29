@@ -34,7 +34,8 @@ class EXPORT_OPT_MANTIDQT_COMMON WorkspaceTreeWidgetSimple
     : public WorkspaceTreeWidget {
   Q_OBJECT
 public:
-  explicit WorkspaceTreeWidgetSimple(bool viewOnly, QWidget *parent = nullptr);
+  explicit WorkspaceTreeWidgetSimple(bool viewOnly = false,
+                                     QWidget *parent = nullptr);
   ~WorkspaceTreeWidgetSimple();
 
   // Context Menu Handlers
@@ -61,6 +62,9 @@ signals:
   void workspaceDoubleClicked(const QString &workspaceName);
   void treeSelectionChanged();
 
+  // Signal when plot MDHistogram clicked
+  void plotMDHistoClicked(const QStringList &workspaceNames);
+
 private slots:
   void onPlotSpectrumClicked();
   void onPlotBinClicked();
@@ -78,13 +82,14 @@ private slots:
   void onPlotSurfaceClicked();
   void onPlotWireframeClicked();
   void onPlotContourClicked();
+  void onPlotMDHistoWorkspaceClicked(); // Linked to plotMDHistoClicked
 
 private:
   QAction *m_plotSpectrum, *m_plotBin, *m_overplotSpectrum,
       *m_plotSpectrumWithErrs, *m_overplotSpectrumWithErrs, *m_plotColorfill,
       *m_sampleLogs, *m_sliceViewer, *m_showInstrument, *m_showData,
       *m_showAlgorithmHistory, *m_showDetectors, *m_plotAdvanced,
-      *m_plotSurface, *m_plotWireframe, *m_plotContour;
+      *m_plotSurface, *m_plotWireframe, *m_plotContour, *m_plotMDHisto1D;
 };
 } // namespace MantidWidgets
 } // namespace MantidQt

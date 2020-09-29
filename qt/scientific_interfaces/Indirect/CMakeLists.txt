@@ -13,6 +13,7 @@ set(
         ConvFitModel.cpp
         DensityOfStates.cpp
         Elwin.cpp
+        IDAFunctionParameterEstimation.cpp
         FunctionTemplateBrowser.cpp
         ILLEnergyTransfer.cpp
         ISISCalibration.cpp
@@ -75,6 +76,7 @@ set(
         IqtFit.cpp
         IqtFitModel.cpp
         IndirectFitPropertyBrowser.cpp
+        FitStatusWidget.cpp
         IndirectFunctionBrowser/ConvTypes.cpp
         IndirectFunctionBrowser/ConvFunctionModel.cpp
         IndirectFunctionBrowser/ConvTemplateBrowser.cpp
@@ -210,6 +212,7 @@ set(
         Quasi.h
         ResNorm.h
         Stretch.h
+        FitStatusWidget.h
 )
 
 set(
@@ -276,7 +279,6 @@ mtd_add_qt_library(
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}
         LINK_LIBS
-        ${TCMALLOC_LIBRARIES_LINKTIME}
         ${CORE_MANTIDLIBS}
         ${POCO_LIBRARIES}
         ${Boost_LIBRARIES}
@@ -311,6 +313,7 @@ set(
         ConvFitModel.cpp
         DensityOfStates.cpp
         Elwin.cpp
+        IDAFunctionParameterEstimation.cpp
         FunctionTemplateBrowser.cpp
         ILLEnergyTransfer.cpp
         ISISCalibration.cpp
@@ -337,6 +340,7 @@ set(
         IndirectFitOutputOptionsPresenter.cpp
         IndirectFitOutputOptionsView.cpp
         IndirectFitPropertyBrowser.cpp
+        FitStatusWidget.cpp
         IndirectFitPlotModel.cpp
         IndirectFitPlotPresenter.cpp
         IndirectFitPlotView.cpp
@@ -477,6 +481,7 @@ set(
         Quasi.h
         ResNorm.h
         Stretch.h
+        FitStatusWidget.h
 )
 
 set(
@@ -568,7 +573,6 @@ mtd_add_qt_library(
         PrecompiledHeader.h
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         LINK_LIBS
-        ${TCMALLOC_LIBRARIES_LINKTIME}
         ${CORE_MANTIDLIBS}
         PythonInterfaceCore
         ${POCO_LIBRARIES}

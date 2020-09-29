@@ -15,7 +15,7 @@ if(MSVC)
   set(THIRD_PARTY_GIT_URL
       "https://github.com/mantidproject/thirdparty-msvc2015.git"
   )
-  set(THIRD_PARTY_GIT_SHA1 51ae2facb5bd9267dee7369478446f689c1be13b)
+  set(THIRD_PARTY_GIT_SHA1 f834a89d01957e28e28443f132e1d7d546972ebc)
   set(THIRD_PARTY_DIR ${EXTERNAL_ROOT}/src/ThirdParty)
   # Generates a script to do the clone/update in tmp
   set(_project_name ThirdParty)
@@ -115,6 +115,9 @@ if(MSVC)
   # Add to the path so that cmake can configure correctly without the user
   # having to do it
   set(ENV{PATH} "${THIRD_PARTY_BIN};$ENV{PATH}")
+  # Set PATH for custom command or target build steps. Avoids the need to
+  # make external PATH updates
+  set(CMAKE_MSVCIDE_RUN_PATH ${THIRD_PARTY_BIN})
 
   # Set variables to help CMake find components
   set(CMAKE_INCLUDE_PATH "${THIRD_PARTY_DIR}/include")

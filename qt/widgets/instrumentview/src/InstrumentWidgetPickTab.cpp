@@ -164,6 +164,7 @@ InstrumentWidgetPickTab::InstrumentWidgetPickTab(InstrumentWidget *instrWidget)
   CollapsibleStack *panelStack = new CollapsibleStack(this);
   m_infoPanel = panelStack->addPanel("Selection", m_selectionInfoDisplay);
   m_plotPanel = panelStack->addPanel("Name", m_plot);
+  collapsePlotPanel();
 
   m_selectionType = Single;
 
@@ -216,6 +217,12 @@ InstrumentWidgetPickTab::InstrumentWidgetPickTab(InstrumentWidget *instrWidget)
   m_ring_rectangle->setIcon(QIcon(":/PickTools/selection-box-ring.png"));
   m_ring_rectangle->setToolTip("Draw a rectangular ring");
 
+  m_sector = new QPushButton();
+  m_sector->setCheckable(true);
+  m_sector->setAutoExclusive(true);
+  m_sector->setIcon(QIcon(":/PickTools/selection-sector.png"));
+  m_sector->setToolTip("Draw a circular sector");
+
   m_free_draw = new QPushButton();
   m_free_draw->setCheckable(true);
   m_free_draw->setAutoExclusive(true);
@@ -259,14 +266,15 @@ InstrumentWidgetPickTab::InstrumentWidgetPickTab(InstrumentWidget *instrWidget)
   toolBox->addWidget(m_rectangle, 0, 3);
   toolBox->addWidget(m_ring_ellipse, 0, 4);
   toolBox->addWidget(m_ring_rectangle, 0, 5);
-  toolBox->addWidget(m_free_draw, 0, 6);
+  toolBox->addWidget(m_sector, 0, 6);
+  toolBox->addWidget(m_free_draw, 0, 7);
   toolBox->addWidget(m_one, 1, 0);
   toolBox->addWidget(m_tube, 1, 1);
   toolBox->addWidget(m_peak, 1, 2);
   toolBox->addWidget(m_peakSelect, 1, 3);
   toolBox->addWidget(m_peakCompare, 1, 4);
   toolBox->addWidget(m_peakAlign, 1, 5);
-  toolBox->setColumnStretch(6, 1);
+  toolBox->setColumnStretch(8, 1);
   toolBox->setSpacing(2);
   connect(m_zoom, SIGNAL(clicked()), this, SLOT(setSelectionType()));
   connect(m_one, SIGNAL(clicked()), this, SLOT(setSelectionType()));
@@ -279,6 +287,7 @@ InstrumentWidgetPickTab::InstrumentWidgetPickTab(InstrumentWidget *instrWidget)
   connect(m_ellipse, SIGNAL(clicked()), this, SLOT(setSelectionType()));
   connect(m_ring_ellipse, SIGNAL(clicked()), this, SLOT(setSelectionType()));
   connect(m_ring_rectangle, SIGNAL(clicked()), this, SLOT(setSelectionType()));
+  connect(m_sector, SIGNAL(clicked()), this, SLOT(setSelectionType()));
   connect(m_free_draw, SIGNAL(clicked()), this, SLOT(setSelectionType()));
   connect(m_edit, SIGNAL(clicked()), this, SLOT(setSelectionType()));
 
@@ -286,6 +295,16 @@ InstrumentWidgetPickTab::InstrumentWidgetPickTab(InstrumentWidget *instrWidget)
   layout->addWidget(m_activeTool);
   layout->addLayout(toolBox);
   layout->addWidget(panelStack);
+}
+
+/**
+ * If the workspace is monochromatic, the plot panel is useless and should be
+ * collapsed
+ */
+void InstrumentWidgetPickTab::collapsePlotPanel() {
+  if (!m_instrWidget->isIntegrable()) {
+    m_plotPanel->collapseCaption();
+  }
 }
 
 /**
@@ -468,6 +487,13 @@ void InstrumentWidgetPickTab::setSelectionType() {
     plotType = DetectorPlotController::Single;
     m_instrWidget->getSurface()->startCreatingShape2D(
         "ring rectangle", Qt::green, QColor(255, 255, 255, 80));
+  } else if (m_sector->isChecked()) {
+    m_selectionType = Draw;
+    m_activeTool->setText("Tool: Circular sector");
+    surfaceMode = ProjectionSurface::DrawRegularMode;
+    plotType = DetectorPlotController::Single;
+    m_instrWidget->getSurface()->startCreatingShape2D(
+        "sector", Qt::green, QColor(255, 255, 255, 80));
   } else if (m_free_draw->isChecked()) {
     m_selectionType = Draw;
     m_activeTool->setText("Tool: Arbitrary shape");

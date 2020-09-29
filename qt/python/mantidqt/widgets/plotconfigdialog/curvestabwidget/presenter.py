@@ -53,6 +53,8 @@ class CurvesTabWidgetPresenter:
             self.line_apply_to_all)
         self.view.marker.apply_to_all_button.clicked.connect(
             self.marker_apply_to_all)
+        self.view.marker.marker_style_combo_box.currentTextChanged.connect(
+            self.view.marker.set_colour_fields_enabled)
         self.view.errorbars.apply_to_all_button.clicked.connect(
             self.errorbars_apply_to_all)
 
@@ -283,12 +285,11 @@ class CurvesTabWidgetPresenter:
             self.view.close()
             return False
 
-        active_lines = FigureErrorsManager.get_curves_from_ax(selected_ax)
+        # Get the lines in the order that they are listed on the legend.
+        active_lines = datafunctions.get_legend_handles(selected_ax)
         for line in active_lines:
             self._update_selected_curve_name(line)
-
-        self.view.populate_select_curve_combo_box(
-            sorted(self.curve_names_dict.keys(), key=lambda s: s.lower()))
+        self.view.populate_select_curve_combo_box(list(self.curve_names_dict))
         return True
 
     def _update_selected_curve_name(self, curve):

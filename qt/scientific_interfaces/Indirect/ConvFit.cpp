@@ -29,7 +29,11 @@ using namespace Mantid::API;
 
 namespace {
 Mantid::Kernel::Logger g_log("ConvFit");
-}
+
+std::vector<std::string> CONVFIT_HIDDEN_PROPS = std::vector<std::string>(
+    {"CreateOutput", "LogValue", "PassWSIndexToFunction", "OutputWorkspace",
+     "IgnoreInvalidData", "Output", "PeakRadius", "PlotParameter"});
+} // namespace
 
 namespace MantidQt {
 namespace CustomInterfaces {
@@ -46,6 +50,8 @@ ConvFit::ConvFit(QWidget *parent)
   m_uiForm->dockArea->m_fitPropertyBrowser->setFunctionTemplateBrowser(
       new ConvTemplateBrowser);
   setFitPropertyBrowser(m_uiForm->dockArea->m_fitPropertyBrowser);
+  m_uiForm->dockArea->m_fitPropertyBrowser->setHiddenProperties(
+      CONVFIT_HIDDEN_PROPS);
   auto dataPresenter = std::make_unique<ConvFitDataPresenter>(
       m_convFittingModel, m_uiForm->dockArea->m_fitDataView);
   connect(
@@ -102,10 +108,10 @@ void ConvFit::setupFit(Mantid::API::IAlgorithm_sptr fitAlgorithm) {
 }
 
 EstimationDataSelector ConvFit::getEstimationDataSelector() const {
-  return
-      [](const MantidVec &, const MantidVec &) -> DataForParameterEstimation {
-        return DataForParameterEstimation{};
-      };
+  return [](const MantidVec &, const MantidVec &,
+            const std::pair<double, double>) -> DataForParameterEstimation {
+    return DataForParameterEstimation{};
+  };
 }
 
 void ConvFit::setModelResolution(const std::string &resolutionName) {

@@ -45,7 +45,7 @@ tests.
 
 //----------------------------------------------------------------------------------------------
 
-/// Add a spherical sample at samplePos to given instrument.
+/// Add a sample at samplePos to given instrument.
 void addSampleToInstrument(Mantid::Geometry::Instrument_sptr &instrument,
                            const Mantid::Kernel::V3D &samplePos);
 
@@ -96,17 +96,22 @@ std::shared_ptr<Mantid::Geometry::CSGObject>
 createSphere(double radius,
              const Mantid::Kernel::V3D &centre = Mantid::Kernel::V3D(),
              const std::string &id = "sp-1");
-/** Create a cuboid shape for your pixels */
+std::string cuboidXML(double xHalfLength, double yHalfLength = -1.0,
+                      double zHalfLength = -1.0,
+                      Mantid::Kernel::V3D centre = {0.0, 0.0, 0.0},
+                      const std::string &id = "detector-shape");
+/** Create a cuboid shape*/
 std::shared_ptr<Mantid::Geometry::CSGObject>
-createCuboid(double x_side_length, double y_side_length = -1.0,
-             double z_side_length = -1.0);
+createCuboid(double xHalfLength, double yHalfLength = -1.0,
+             double zHalfLength = -1.0,
+             Mantid::Kernel::V3D centre = {0.0, 0.0, 0.0},
+             const std::string &id = "detector-shape");
 /**
  * Create a rotated cuboid shape
  */
-std::shared_ptr<Mantid::Geometry::CSGObject> createCuboid(double xHalfLength,
-                                                          double yHalfLength,
-                                                          double zHalfLength,
-                                                          double angle);
+std::shared_ptr<Mantid::Geometry::CSGObject>
+createCuboid(double xHalfLength, double yHalfLength, double zHalfLength,
+             double angle, Mantid::Kernel::V3D axis);
 /**
  * Create a component assembly at the origin made up of 4 cylindrical detectors
  */
@@ -180,7 +185,7 @@ createCylInstrumentWithDetInGivenPositions(const std::vector<double> &L2,
                                            const std::vector<double> &azim);
 /**
  * Create an test instrument with n panels of 9 cylindrical detectors, a source
- * and spherical sample shape.
+ * and a sample position.
  * Detectors have IDs assigned as follows:
  * 7 8 9
  * 4 5 6

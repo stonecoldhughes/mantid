@@ -2,9 +2,10 @@ include(UiToPy)
 add_subdirectory(dataprocessorinterface)
 add_subdirectory(batchwidget)
 add_subdirectory(poldi)
+add_subdirectory(drill)
 
 set(UI_FILES
-    stitcher.ui)
+   )
 
 UiToPy(UI_FILES CompileUIUIBase)
 

@@ -12,6 +12,7 @@
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/Axis.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidAPI/IMDHistoWorkspace.h"
 #include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/MatrixWorkspace.h"
@@ -23,6 +24,16 @@
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
+
+namespace {
+bool singleValued(const MatrixWorkspace &ws) {
+  if (ws.getNumberHistograms() == 1 && ws.blocksize() == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+} // namespace
 
 namespace MantidQt {
 namespace MantidWidgets {
@@ -46,7 +57,8 @@ WorkspaceTreeWidgetSimple::WorkspaceTreeWidgetSimple(bool viewOnly,
       m_plotAdvanced(new QAction("Advanced...", this)),
       m_plotSurface(new QAction("Surface", this)),
       m_plotWireframe(new QAction("Wireframe", this)),
-      m_plotContour(new QAction("Contour", this)) {
+      m_plotContour(new QAction("Contour", this)),
+      m_plotMDHisto1D(new QAction("Plot 1D MDHistogram...", this)) {
 
   // Replace the double click action on the MantidTreeWidget
   m_tree->m_doubleClickAction = [&](const QString &wsName) {
@@ -55,6 +67,10 @@ WorkspaceTreeWidgetSimple::WorkspaceTreeWidgetSimple(bool viewOnly,
 
   connect(m_plotSpectrum, SIGNAL(triggered()), this,
           SLOT(onPlotSpectrumClicked()));
+  // connect event m_plotMDHisto1D to signal slot onPlotMDHistoWorkspaceClicked
+  connect(m_plotMDHisto1D, SIGNAL(triggered()), this,
+          SLOT(onPlotMDHistoWorkspaceClicked()));
+
   connect(m_plotBin, SIGNAL(triggered()), this, SLOT(onPlotBinClicked()));
   connect(m_overplotSpectrum, SIGNAL(triggered()), this,
           SLOT(onOverplotSpectrumClicked()));
@@ -116,7 +132,6 @@ void WorkspaceTreeWidgetSimple::popupContextMenu() {
     }
     if (auto matrixWS = std::dynamic_pointer_cast<MatrixWorkspace>(workspace)) {
       QMenu *plotSubMenu(new QMenu("Plot", menu));
-
       // Don't plot 1D spectra if only one X value
       bool multipleBins = false;
       try {
@@ -130,7 +145,6 @@ void WorkspaceTreeWidgetSimple::popupContextMenu() {
           }
         }
       }
-
       if (multipleBins) {
         plotSubMenu->addAction(m_plotSpectrum);
         plotSubMenu->addAction(m_overplotSpectrum);
@@ -140,7 +154,6 @@ void WorkspaceTreeWidgetSimple::popupContextMenu() {
       } else {
         plotSubMenu->addAction(m_plotBin);
       }
-
       plotSubMenu->addSeparator();
       plotSubMenu->addAction(m_plotColorfill);
 
@@ -152,19 +165,24 @@ void WorkspaceTreeWidgetSimple::popupContextMenu() {
 
         plotSubMenu->addMenu(plot3DSubMenu);
       }
+      if (!singleValued(*matrixWS)) {
+        // regular matrix workspace
+        menu->addMenu(plotSubMenu);
+        menu->addSeparator();
+        menu->addAction(m_showData);
+        menu->addAction(m_showAlgorithmHistory);
+        menu->addAction(m_showInstrument);
+        m_showInstrument->setEnabled(
+            matrixWS->getInstrument() &&
+            !matrixWS->getInstrument()->getName().empty() &&
+            matrixWS->getAxis(1)->isSpectra());
+        menu->addAction(m_sampleLogs);
+        menu->addAction(m_sliceViewer);
+        menu->addAction(m_showDetectors);
+      } else {
+        menu->addAction(m_showData);
+      }
 
-      menu->addMenu(plotSubMenu);
-      menu->addSeparator();
-      menu->addAction(m_showData);
-      menu->addAction(m_showAlgorithmHistory);
-      menu->addAction(m_showInstrument);
-      m_showInstrument->setEnabled(
-          matrixWS->getInstrument() &&
-          !matrixWS->getInstrument()->getName().empty() &&
-          matrixWS->getAxis(1)->isSpectra());
-      menu->addAction(m_sampleLogs);
-      menu->addAction(m_sliceViewer);
-      menu->addAction(m_showDetectors);
     } else if (std::dynamic_pointer_cast<ITableWorkspace>(workspace)) {
       menu->addAction(m_showData);
       menu->addAction(m_showAlgorithmHistory);
@@ -174,7 +192,35 @@ void WorkspaceTreeWidgetSimple::popupContextMenu() {
     } else if (std::dynamic_pointer_cast<IMDWorkspace>(workspace)) {
       menu->addAction(m_showAlgorithmHistory);
       menu->addAction(m_sampleLogs);
-      menu->addAction(m_sliceViewer);
+
+      // launch slice viewer or plot spectrum conditionally
+      bool add_slice_viewer = false;
+      bool add_1d_plot = false;
+
+      auto mdhist_ws = std::dynamic_pointer_cast<IMDHistoWorkspace>(workspace);
+      if (mdhist_ws) {
+        // if the number of non-integral  if the number of non-integrated
+        // dimensions is 1.
+        auto num_dims = mdhist_ws->getNonIntegratedDimensions().size();
+        if (num_dims == 1) {
+          // number of non-integral dimension is 1: show menu item to plot
+          // spectrum
+          add_1d_plot = true;
+        } else if (num_dims > 1) {
+          // number of non-integral dimension is larger than 1: show menu item
+          // to launch slice view
+          add_slice_viewer = true;
+        }
+      } else {
+        add_slice_viewer = true;
+      }
+
+      if (add_slice_viewer) {
+        menu->addAction(m_sliceViewer);
+      } else if (add_1d_plot) {
+        menu->addAction(m_plotMDHisto1D);
+      }
+
     } else if (auto wsGroup =
                    std::dynamic_pointer_cast<WorkspaceGroup>(workspace)) {
       auto workspaces = wsGroup->getAllItems();
@@ -288,6 +334,11 @@ void WorkspaceTreeWidgetSimple::onPlotWireframeClicked() {
 
 void WorkspaceTreeWidgetSimple::onPlotContourClicked() {
   emit plotContourClicked(getSelectedWorkspaceNamesAsQList());
+}
+
+// Define signal
+void WorkspaceTreeWidgetSimple::onPlotMDHistoWorkspaceClicked() {
+  emit plotMDHistoClicked(getSelectedWorkspaceNamesAsQList());
 }
 
 } // namespace MantidWidgets

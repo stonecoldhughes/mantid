@@ -28,7 +28,6 @@ set(SRC_FILES
     src/MuonProcess.cpp
     src/MuonPairAsymmetryCalculator.cpp
     src/ProcessIndirectFitParameters.cpp
-    src/RefRoi.cpp
     src/SANSBeamFinder.cpp
     src/SANSBeamFluxCorrection.cpp
     src/SANSSensitivityCorrection.cpp
@@ -71,7 +70,6 @@ set(INC_FILES
     inc/MantidWorkflowAlgorithms/MuonProcess.h
     inc/MantidWorkflowAlgorithms/MuonPairAsymmetryCalculator.h
     inc/MantidWorkflowAlgorithms/ProcessIndirectFitParameters.h
-    inc/MantidWorkflowAlgorithms/RefRoi.h
     inc/MantidWorkflowAlgorithms/SANSBeamFinder.h
     inc/MantidWorkflowAlgorithms/SANSBeamFluxCorrection.h
     inc/MantidWorkflowAlgorithms/SANSSensitivityCorrection.h
@@ -136,7 +134,6 @@ include_directories(inc ../Nexus/inc)
 
 target_link_libraries(WorkflowAlgorithms
                       LINK_PRIVATE
-                      ${TCMALLOC_LIBRARIES_LINKTIME}
                       ${MANTIDLIBS}
                       Nexus
                       ${GSL_LIBRARIES})

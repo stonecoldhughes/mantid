@@ -14,6 +14,7 @@ import copy
 import numpy as np
 
 from matplotlib.axes import Axes
+from matplotlib.cbook import safe_masked_invalid
 from matplotlib.collections import Collection, PolyCollection
 from matplotlib.colors import Colormap
 from matplotlib.container import Container, ErrorbarContainer
@@ -21,6 +22,7 @@ from matplotlib.image import AxesImage
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.table import Table
+from matplotlib.ticker import NullLocator
 from mpl_toolkits.mplot3d import Axes3D
 
 from mantid import logger
@@ -1151,6 +1153,26 @@ class MantidAxes(Axes):
 
             datafunctions.waterfall_remove_fill(self)
 
+    def set_xscale(self, *args, **kwargs):
+        has_minor_ticks = not isinstance(self.xaxis.minor.locator, NullLocator)
+
+        super().set_xscale(*args, **kwargs)
+
+        if has_minor_ticks:
+            self.minorticks_on()
+        else:
+            self.minorticks_off()
+
+    def set_yscale(self, *args, **kwargs):
+        has_minor_ticks = not isinstance(self.yaxis.minor.locator, NullLocator)
+
+        super().set_yscale(*args, **kwargs)
+
+        if has_minor_ticks:
+            self.minorticks_on()
+        else:
+            self.minorticks_off()
+
     # ------------------ Private api --------------------------------------------------------
 
     def _attach_colorbar(self, mappable, colorbar):
@@ -1352,6 +1374,10 @@ class MantidAxes3D(Axes3D):
             polyc = axesfunctions3D.plot_surface(self, *args, **kwargs)
         else:
             polyc = Axes3D.plot_surface(self, *args, **kwargs)
+
+            # This is a bit of a hack, should be able to remove
+            # when matplotlib supports plotting masked arrays
+            polyc._A = safe_masked_invalid(polyc._A)
 
         # Create a copy of the original data points because data are set to nan when the axis limits are changed.
         self.original_data = copy.deepcopy(polyc._vec)

@@ -8,6 +8,7 @@
 
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
+from mantid.plots import convert_color_to_hex
 from mantidqt.widgets.plotconfigdialog import generate_ax_name, get_axes_names_dict
 from mantidqt.widgets.plotconfigdialog.axestabwidget import AxProperties
 from mantidqt.widgets.plotconfigdialog.axestabwidget.view import AxesTabWidgetView
@@ -41,6 +42,9 @@ class AxesTabWidgetPresenter:
             self.update_view)
         self.view.axis_button_group.buttonClicked.connect(
             self.axis_changed)
+        self.view.apply_all_button.clicked.connect(self.apply_all_properties)
+        self.view.show_minor_ticks_check_box.toggled.connect(
+            self.show_minor_ticks_checked)
 
     def apply_properties(self):
         """Update the axes with the user inputted properties"""
@@ -50,6 +54,26 @@ class AxesTabWidgetPresenter:
         ax = self.get_selected_ax()
 
         self.set_ax_title(ax, self.current_view_props['title'])
+        self.set_ax_canvas_color(ax, self.current_view_props['canvas_color'])
+
+        if not isinstance(ax, Axes3D):
+            if self.current_view_props['minor_ticks']:
+                ax.minorticks_on()
+            else:
+                ax.minorticks_off()
+
+            ax.show_minor_gridlines = self.current_view_props['minor_gridlines']
+
+            # If the grid is enabled update it
+            if ax.show_minor_gridlines:
+                if ax.xaxis._gridOnMajor and ax.yaxis._gridOnMajor:
+                    ax.grid(True, which='minor')
+                elif ax.xaxis._gridOnMajor:
+                    ax.grid(True, axis='x', which='minor')
+                elif ax.yaxis._gridOnMajor:
+                    ax.grid(True, axis='y', which='minor')
+            else:
+                ax.grid(False, which='minor')
 
         if "xlabel" in self.current_view_props:
             ax.set_xlabel(self.current_view_props['xlabel'])
@@ -74,6 +98,58 @@ class AxesTabWidgetPresenter:
             ax.set_zscale(self.current_view_props['zscale'])
             ax.set_zlim3d(self.current_view_props['zlim'])
 
+        self.update_view()
+
+    def apply_all_properties(self):
+        """Update the axes with the user inputted properties"""
+        # Make sure current_view_props is up to date if values have been changed
+        self.axis_changed()
+        view_props = self.current_view_props
+        for ax in self.axes_names_dict.values():
+
+            self.set_ax_canvas_color(ax, view_props['canvas_color'])
+
+            if self.current_view_props['minor_ticks']:
+                ax.minorticks_on()
+            else:
+                ax.minorticks_off()
+
+            ax.show_minor_gridlines = self.current_view_props['minor_gridlines']
+
+            # If the grid is enabled update it
+            if ax.show_minor_gridlines:
+                if ax.xaxis._gridOnMajor and ax.yaxis._gridOnMajor:
+                    ax.grid(True, which='minor')
+                elif ax.xaxis._gridOnMajor:
+                    ax.grid(True, axis='x', which='minor')
+                elif ax.yaxis._gridOnMajor:
+                    ax.grid(True, axis='y', which='minor')
+            else:
+                ax.grid(False, which='minor')
+
+            if "xlabel" in view_props:
+                ax.set_xlabel(view_props['xlabel'])
+                ax.set_xscale(view_props['xscale'])
+
+                if isinstance(ax, Axes3D):
+                    ax.set_xlim3d(view_props['xlim'])
+                else:
+                    ax.set_xlim(view_props['xlim'])
+
+            if "ylabel" in view_props:
+                ax.set_ylabel(view_props['ylabel'])
+                ax.set_yscale(view_props['yscale'])
+
+                if isinstance(ax, Axes3D):
+                    ax.set_ylim3d(view_props['ylim'])
+                else:
+                    ax.set_ylim(view_props['ylim'])
+
+            if "zlabel" in view_props:
+                ax.set_zlabel(view_props['zlabel'])
+                ax.set_zscale(view_props['zscale'])
+                ax.set_zlim3d(view_props['zlim'])
+            ax.figure.canvas.draw()
         self.update_view()
 
     def get_selected_ax(self):
@@ -109,6 +185,10 @@ class AxesTabWidgetPresenter:
         ax.set_title(new_title)
         self.rename_selected_axes(generate_ax_name(ax))
 
+    def set_ax_canvas_color(self, ax, color_rgb):
+        """Set axes canvas color"""
+        ax.set_facecolor(color_rgb)
+
     def update_view(self):
         """Update the properties in the view from the selected axes"""
         self.current_view_props.clear()
@@ -127,8 +207,21 @@ class AxesTabWidgetPresenter:
         # so the scale option is disabled.
         self.view.scale_combo_box.setEnabled("zlim" not in ax_props)
 
+        # Minor ticks/gridlines are currently not supported for 3D plots.
+        self.view.show_minor_gridlines_check_box.setVisible(not plot_is_3d)
+        self.view.show_minor_ticks_check_box.setVisible(not plot_is_3d)
+
         ax = self.view.get_axis()
         self.view.set_title(ax_props.title)
+
+        color_hex = convert_color_to_hex(ax_props["canvas_color"])
+        self.view.set_canvas_color(color_hex)
+
+        if not plot_is_3d:
+            self.view.set_show_minor_ticks(ax_props.minor_ticks)
+            self.view.show_minor_gridlines_check_box.setEnabled(ax_props.minor_ticks)
+            self.view.set_show_minor_gridlines(ax_props.minor_gridlines)
+
         lim = ax_props[f"{ax}lim"]
         self.view.set_lower_limit(lim[0])
         self.view.set_upper_limit(lim[1])
@@ -141,9 +234,12 @@ class AxesTabWidgetPresenter:
         ax = self.current_axis
 
         self.current_view_props['title'] = self.view.get_title()
+        self.current_view_props['minor_ticks'] = self.view.get_show_minor_ticks()
+        self.current_view_props['minor_gridlines'] = self.view.get_show_minor_gridlines()
         self.current_view_props[f"{ax}lim"] = (self.view.get_lower_limit(), self.view.get_upper_limit())
         self.current_view_props[f"{ax}label"] = self.view.get_label()
         self.current_view_props[f"{ax}scale"] = self.view.get_scale()
+        self.current_view_props["canvas_color"] = self.view.get_canvas_color()
 
         new_ax = self.view.get_axis()
         self.current_axis = new_ax
@@ -162,3 +258,10 @@ class AxesTabWidgetPresenter:
             self.view.set_upper_limit(lim[1])
             self.view.set_label(ax_props[f"{ax}label"])
             self.view.set_scale(ax_props[f"{ax}scale"])
+
+    def show_minor_ticks_checked(self, checked):
+        # Can't have minor gridlines without minor ticks
+        self.view.show_minor_gridlines_check_box.setEnabled(checked)
+
+        if not checked:
+            self.view.show_minor_gridlines_check_box.setChecked(False)

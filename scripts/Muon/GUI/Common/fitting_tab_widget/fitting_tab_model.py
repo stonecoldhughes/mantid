@@ -13,7 +13,10 @@ from Muon.GUI.Common.ADSHandler.muon_workspace_wrapper import MuonWorkspaceWrapp
 from mantid.simpleapi import (RenameWorkspace, ConvertFitFunctionForMuonTFAsymmetry, CalculateMuonAsymmetry,
                               CopyLogs, EvaluateFunction)
 from mantid.api import AnalysisDataService
+from Muon.GUI.Common.contexts.frequency_domain_analysis_context import FrequencyDomainAnalysisContext
+from Muon.GUI.Common.utilities.run_string_utils import run_list_to_string
 import mantid
+import math
 
 MUON_ANALYSIS_SUFFIX = ' MA'
 FREQUENCY_DOMAIN_ANALYSIS_SUFFIX = ' FD'
@@ -93,8 +96,12 @@ class FittingTabModel(object):
 
     def evaluate_plot_guess(self, workspace_names: str, plot_guess: bool, index: int):
         fit_function, data_ws_name = self._get_guess_parameters(workspace_names, index)
+        if isinstance(data_ws_name, list):
+            data_ws_name = data_ws_name[0]
         if not data_ws_name:
             return
+        if isinstance(data_ws_name, List):
+            data_ws_name = data_ws_name[0]
         if self.context.workspace_suffix == MUON_ANALYSIS_SUFFIX:
             guess_ws_name = MUON_ANALYSIS_GUESS_WS + data_ws_name
         elif self.context.workspace_suffix == FREQUENCY_DOMAIN_ANALYSIS_SUFFIX:
@@ -174,11 +181,27 @@ class FittingTabModel(object):
 
     def do_single_fit_and_return_workspace_parameters_and_fit_function(
             self, parameters_dict):
-        alg = mantid.AlgorithmManager.create("Fit")
+        if self.double_pulse_enabled():
+            alg = self._create_double_pulse_alg()
+        else:
+            alg = mantid.AlgorithmManager.create("Fit")
+
         output_workspace, output_parameters, function_object, output_status, output_chi, covariance_matrix = run_Fit(
             parameters_dict, alg)
         CopyLogs(InputWorkspace=parameters_dict['InputWorkspace'], OutputWorkspace=output_workspace, StoreInADS=False)
         return output_workspace, output_parameters, function_object, output_status, output_chi, covariance_matrix
+
+    def _create_double_pulse_alg(self):
+        alg = mantid.AlgorithmManager.create("DoublePulseFit")
+        offset = self.context.gui_context['DoublePulseTime']
+        muon_halflife = 2.2
+        decay = math.exp(-offset / muon_halflife)
+        first_pulse_weighting = decay / (1 + decay)
+        second_pulse_weighting = 1 / (1 + decay)
+        alg.setProperty("PulseOffset", offset)
+        alg.setProperty("FirstPulseWeight", first_pulse_weighting)
+        alg.setProperty("SecondPulseWeight", second_pulse_weighting)
+        return alg
 
     def _handle_single_fit_results(self, input_workspace, fit_function, fitting_parameters_table, output_workspace,
                                    covariance_matrix):
@@ -204,7 +227,10 @@ class FittingTabModel(object):
 
     def do_simultaneous_fit_and_return_workspace_parameters_and_fit_function(
             self, parameters_dict):
-        alg = mantid.AlgorithmManager.create("Fit")
+        if self.double_pulse_enabled():
+            alg = self._create_double_pulse_alg()
+        else:
+            alg = mantid.AlgorithmManager.create("Fit")
 
         output_workspace, output_parameters, function_object, output_status, output_chi, covariance_matrix \
             = run_simultaneous_Fit(parameters_dict, alg)
@@ -422,13 +448,16 @@ class FittingTabModel(object):
 
     # This function creates a list of keys from a list of input workspace names
     def create_hashable_keys_for_workspace_names(self):
-        runs, group_and_pairs = self.get_runs_groups_and_pairs_for_fits()
         list_of_workspace_lists = []
-        for run, group_and_pair in zip(runs, group_and_pairs):
-            separated_runs, separated_groups_and_pairs = \
-                self.get_separated_runs_and_group_and_pairs(run, group_and_pair)
-            list_of_workspace_lists += [self.get_fit_workspace_names_from_groups_and_runs(separated_runs,
-                                                                                          separated_groups_and_pairs)]
+        if isinstance(self.context, FrequencyDomainAnalysisContext):
+            list_of_workspace_lists = [[item ] for item in self.get_selected_workspace_list()]
+        else:
+            runs, group_and_pairs = self.get_runs_groups_and_pairs_for_fits()
+            for run, group_and_pair in zip(runs, group_and_pairs):
+                separated_runs, separated_groups_and_pairs = \
+                    self.get_separated_runs_and_group_and_pairs(run, group_and_pair)
+                list_of_workspace_lists += [self.get_fit_workspace_names_from_groups_and_runs(separated_runs,
+                                                                                              separated_groups_and_pairs)]
         workspace_key_list = []
         for workspace_list in list_of_workspace_lists:
             workspace_key_list += [self.create_workspace_key(workspace_list)]
@@ -486,7 +515,7 @@ class FittingTabModel(object):
         self.ws_fit_function_map = {}
 
     def freq_type(self):
-        if self.context._frequency_context is not None:
+        if isinstance(self.context, FrequencyDomainAnalysisContext):
             freq = self.context._frequency_context.plot_type
         else:
             freq = 'None'
@@ -542,7 +571,7 @@ class FittingTabModel(object):
     def get_parameters_for_single_tf_fit(self, workspace):
         # workspace is the name of the input workspace
         fit_workspace_name, _ = create_fitted_workspace_name(workspace, self.function_name)
-        return {
+        parameters = {
             'InputFunction': self.get_ws_fit_function([workspace]),
             'ReNormalizedWorkspaceList': workspace,
             'UnNormalizedWorkspaceList': self.context.group_pair_context.get_unormalisised_workspace_list([workspace])[
@@ -553,19 +582,42 @@ class FittingTabModel(object):
             'Minimizer': self.fitting_options["minimiser"],
         }
 
+        if self.double_pulse_enabled():
+            offset = self.context.gui_context['DoublePulseTime']
+            muon_halflife = 2.2
+            decay = math.exp(-offset / muon_halflife)
+            first_pulse_weighting = decay / (1 + decay)
+            parameters.update({'PulseOffset' : offset,
+                               'EnableDoublePulse': True,'FirstPulseWeight': first_pulse_weighting})
+
+        return parameters
+
     def get_parameters_for_simultaneous_tf_fit(self, workspaces):
         # workspaces is a list containing the N workspaces which form the simultaneous fit
         # creates a workspace name based on the first entry in the workspace list
         fit_workspaces, _ = create_multi_domain_fitted_workspace_name(workspaces[0], self.function_name)
-        return {
+
+        parameters = {
             'InputFunction': self.get_ws_fit_function(workspaces),
             'ReNormalizedWorkspaceList': workspaces,
             'UnNormalizedWorkspaceList': self.context.group_pair_context.get_unormalisised_workspace_list(workspaces),
             'OutputFitWorkspace': fit_workspaces,
             'StartX': self.fitting_options["startX"],
             'EndX': self.fitting_options["endX"],
-            'Minimizer': self.fitting_options["minimiser"]
+            'Minimizer': self.fitting_options["minimiser"],
         }
+        if self.double_pulse_enabled():
+            offset = self.context.gui_context['DoublePulseTime']
+            muon_halflife = 2.2
+            decay = math.exp(-offset / muon_halflife)
+            first_pulse_weighting = decay / (1 + decay)
+            parameters.update({'PulseOffset' : offset,
+                               'EnableDoublePulse': True,'FirstPulseWeight': first_pulse_weighting})
+
+        return parameters
+
+    def double_pulse_enabled(self):
+        return 'DoublePulseEnabled' in self.context.gui_context and self.context.gui_context['DoublePulseEnabled']
 
     # get workspace information
     def get_selected_workspace_list(self):
@@ -628,8 +680,9 @@ class FittingTabModel(object):
                 if group_or_pair in self.context.group_pair_context.selected_pairs:
                     workspace_names += [get_pair_asymmetry_name(self.context, group_or_pair, run,
                                                                 not self.fitting_options["fit_to_raw"])]
-                else:
-                    workspace_names += [get_group_asymmetry_name(self.context, group_or_pair, run,
+                elif group_or_pair in self.context.group_pair_context.selected_groups:
+                    period_string = run_list_to_string(self.context.group_pair_context[group_or_pair].periods)
+                    workspace_names += [get_group_asymmetry_name(self.context, group_or_pair, run, period_string,
                                                                  not self.fitting_options["fit_to_raw"])]
 
         return workspace_names
@@ -658,6 +711,8 @@ class FittingTabModel(object):
 
     @staticmethod
     def get_fit_function_parameter_values(fit_function):
+        if fit_function is None:
+            return []
         number_of_parameters = fit_function.nParams()
         parameters = [fit_function.parameterName(i) for i in range(number_of_parameters)]
         parameter_values = [fit_function.getParameterValue(parameters[i]) for i in

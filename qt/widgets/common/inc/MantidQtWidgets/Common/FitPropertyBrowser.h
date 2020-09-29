@@ -108,6 +108,8 @@ public:
   QList<double> getParameterValues() const;
   /// Get function parameter names
   QStringList getParameterNames() const;
+  // Get parameters used to run the Fit algorithm
+  std::string getFitAlgorithmParameters() const;
 
   /// Load function
   void loadFunction(const QString &funcString);
@@ -273,6 +275,10 @@ public:
   void addHandle(const std::string &wsName,
                  const std::shared_ptr<Mantid::API::Workspace> &ws) override;
 
+  // Remove Workspace
+  void removeWorkspace(const std::string &wsName);
+  void removeWorkspaceAndSpectra(const std::string &wsName);
+
   /// Called when the Fit is finished
   void finishHandle(const Mantid::API::IAlgorithm *alg) override;
 
@@ -319,6 +325,10 @@ public:
 
 public slots:
   virtual void fit();
+  virtual void toggleSettingsBrowserVisible();
+  virtual void
+  removePropertiesFromSettingsBrowser(const QStringList &propsToRemove);
+  virtual void toggleWsListVisible();
   virtual void sequentialFit();
   void undoFit();
   virtual void clear();
@@ -661,6 +671,9 @@ private:
   /// Shows if the PeakPickerTool is on
   bool m_peakToolOn;
 
+  /// bool to display ws list or not
+  bool m_hideWsListWidget;
+
   /// If true background function will be included automatically
   bool m_auto_back;
 
@@ -687,6 +700,9 @@ private:
 
   /// Should the data be normalised before fitting?
   bool m_shouldBeNormalised;
+
+  // Keep a history of the parameters used to run the Fit algorithm
+  std::string m_fitAlgParameters;
 
   /// If non-empty it contains references to the spectra
   /// allowed to be fitted in this browser:

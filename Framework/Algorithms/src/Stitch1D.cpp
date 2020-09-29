@@ -423,20 +423,6 @@ MatrixWorkspace_sptr Stitch1D::conjoinXAxis(MatrixWorkspace_sptr &inOne,
   API::Workspace_sptr ws = conjoinX->getProperty("OutputWorkspace");
   return std::dynamic_pointer_cast<Mantid::API::MatrixWorkspace>(ws);
 }
-
-/** Runs the CreateSingleValuedWorkspace Algorithm as a child
- @param val :: The double to convert to a single value workspace
- @return A shared pointer to the resulting MatrixWorkspace
- */
-MatrixWorkspace_sptr Stitch1D::singleValueWS(const double val) {
-  auto singleValueWS =
-      this->createChildAlgorithm("CreateSingleValuedWorkspace");
-  singleValueWS->initialize();
-  singleValueWS->setProperty("DataValue", val);
-  singleValueWS->execute();
-  return singleValueWS->getProperty("OutputWorkspace");
-}
-
 /** Finds the bins containing the ends of the overlapping region
  @param startOverlap :: The start of the overlapping region
  @param endOverlap :: The end of the overlapping region
@@ -509,8 +495,7 @@ void Stitch1D::scaleWorkspace(MatrixWorkspace_sptr &ws,
       std::isnan(m_scaleFactor)) {
     std::stringstream messageBuffer;
     messageBuffer << "Stitch1D calculated scale factor is: " << m_scaleFactor
-                  << ". Check that in both input workspaces the integrated "
-                     "overlap region is non-zero.";
+                  << ". Check the overlap region is non-zero.";
     g_log.warning(messageBuffer.str());
   }
 }
@@ -579,11 +564,10 @@ void Stitch1D::exec() {
   m_errorScaleFactor = m_scaleFactor;
   const bool useManualScaleFactor = this->getProperty("UseManualScaleFactor");
   if (useManualScaleFactor) {
-    MatrixWorkspace_sptr manualScaleFactorWS = singleValueWS(m_scaleFactor);
     if (scaleRHS)
-      rhs *= manualScaleFactorWS;
+      rhs *= m_scaleFactor;
     else
-      lhs *= manualScaleFactorWS;
+      lhs *= m_scaleFactor;
   } else {
     auto rhsOverlapIntegrated = integration(rhs, startOverlap, endOverlap);
     auto lhsOverlapIntegrated = integration(lhs, startOverlap, endOverlap);
@@ -621,8 +605,7 @@ void Stitch1D::exec() {
     } else {
       g_log.information("Using un-weighted mean for Stitch1D overlap mean");
       MatrixWorkspace_sptr sum = overlap1 + overlap2;
-      MatrixWorkspace_sptr denominator = singleValueWS(2.0);
-      overlapave = sum / denominator;
+      overlapave = sum * 0.5;
     }
     result = lhs + overlapave + rhs;
     reinsertSpecialValues(result);

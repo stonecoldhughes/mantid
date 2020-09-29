@@ -150,6 +150,16 @@ class PythonFileInterpreter(QWidget):
         # Re-populate the completion API after execution success
         self._presenter.model.sig_exec_success.connect(self.code_completer.update_completion_api)
 
+        # Only load the simpleapi completions if the code editor starts being modified.
+        self.sig_editor_modified.connect(self.code_completer.add_simpleapi_to_completions_if_required)
+
+    def connect_to_progress_reports(self, this):
+        self.editor.progressMade.connect(self.sig_progress)
+        self.sig_progress.connect(this)
+
+    def disconnect_from_progress_reports(self):
+        self.editor.progressMade.disconnect(self.sig_progress)
+
     def closeEvent(self, event):
         self.deleteLater()
         if self.find_replace_dialog:

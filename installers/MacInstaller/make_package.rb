@@ -16,32 +16,12 @@ require 'pathname'
 AT_EXECUTABLE_TAG = '@executable_path'
 AT_LOADER_TAG = '@loader_path'
 AT_RPATH_TAG = '@rpath'
+# Collection modules to copy from system installation
+# Required to install other packages with pip
 BUNDLED_PY_MODULES_COMMON = [
-  'appnope',
-  'backcall',
-  'certifi',
-  'chardet',
-  'CifFile',
-  'cycler.py',
-  'dateutil',
-  'decorator.py',
-  'h5py',
-  'idna',
-  'IPython',
-  'ipython_genutils',
-  'ipykernel',
-  'jupyter_core',
-  'jupyter_client',
-  'kiwisolver.%s.so',
-  'markupsafe',
-  'matplotlib',
-  'mistune.py',
-  'mock',
-  'mpl_toolkits',
-  'numpy',
-  'pexpect',
-  'pickleshare.py',
+  'easy_install.py',
   'pip',
+  'pip*.*-info',
   'pkg_resources',
   'prompt_toolkit',
   'ptyprocess',
@@ -61,11 +41,16 @@ BUNDLED_PY_MODULES_COMMON = [
   'urllib3',
   'wcwidth',
   'yaml',
-  'zmq',
+  'zmq'
   'appdirs.py',
   'config',
   'ipywidgets'
-]
+  'setuptools',
+  'setuptools*.*-info',
+  'wheel',
+  'wheel*.*-info'
+].freeze
+# Brew Python packages to be copied to bundle
 BUNDLED_PY_MODULES_MANTIDPLOT = [
   'PyQt4/__init__.py',
   'PyQt4/Qt.so',
@@ -77,7 +62,7 @@ BUNDLED_PY_MODULES_MANTIDPLOT = [
   'PyQt4/QtXml.so',
   'PyQt4/sip.so',
   'PyQt4/uic'
-]
+].freeze
 BUNDLED_PY_MODULES_WORKBENCH = [
   'PyQt5/__init__.py',
   'PyQt5/Qt.so',
@@ -91,8 +76,10 @@ BUNDLED_PY_MODULES_WORKBENCH = [
   'PyQt5/QtXml.so',
   'PyQt5/sip.so',
   'PyQt5/uic',
-  'psutil'
-]
+].freeze
+REQUIREMENTS_FILE = Pathname.new(__dir__) + 'requirements.txt'
+REQUIREMENTS_WORKBENCH_FILE = Pathname.new(__dir__) + 'requirements-workbench.txt'
+SITECUSTOMIZE_FILE = Pathname.new(__dir__) + 'sitecustomize.py'
 DEBUG = 1
 FRAMEWORK_IDENTIFIER = '.framework'
 HOMEBREW_PREFIX = '/usr/local'
@@ -137,6 +124,7 @@ end
 # +cmd+:: String giving command
 # return output string
 def execute(cmd, ignore_fail = false)
+  debug("Executing command #{cmd}")
   stdout, stderr, status = Open3.capture3(cmd)
   fatal("Command #{cmd} failed!\n" + stderr) if !ignore_fail && status != 0
   stdout
@@ -152,21 +140,23 @@ def python_version(py_exe)
   return version_number_str.split('.').map { |x| x.to_i }
 end
 
-# Deploy the embedded Python bundle
+# Deploy the embedded Python bundle to the Frameworks subdirectory
 # Params:
 # +destination+:: Destination directory for bundle
 # +host_python_exe+:: Executable of Python bundle to copy over
 # +bundled_packages+:: A list of packages that should be bundled
+# +requirements_files+:: A list of requirements files to install additional packages
 # returns the bundle site packages directory
 def deploy_python_framework(destination, host_python_exe,
-                            bundled_packages)
+                            bundled_packages,
+                            requirements_files)
   host_py_home = host_python_exe.realpath.parent.parent
   py_ver = host_py_home.basename
-  bundle_python_framework = destination + 'Python.framework'
+  bundle_python_framework = destination + 'Frameworks/Python.framework'
   bundle_py_home = bundle_python_framework + "Versions/#{py_ver}"
   deployable_assets = [
     'Python', "bin/python#{py_ver}", "bin/2to3-#{py_ver}",
-    "lib/python#{py_ver}", 'Resources'
+    "include/python#{py_ver}", "lib/python#{py_ver}", 'Resources'
   ]
 
   deployable_assets.each do |asset|
@@ -207,7 +197,18 @@ def deploy_python_framework(destination, host_python_exe,
     FileUtils.ln_s "2to3-#{py_ver}", "2to3"
   end
 
-  # remove site-packages symlink and copy in just the packages we want
+  # add python symlink to MacOS for easier command-line access
+  contents_macos = destination + 'MacOS'
+  Dir.chdir(contents_macos) do
+    py_exe = Pathname.new("#{bundle_python_framework}/Versions/#{py_ver}/bin/python#{py_ver}")
+    FileUtils.ln_s "#{py_exe.relative_path_from(contents_macos)}", "python"
+  end
+
+  # remove Info.plist files so outer application controls app display name
+  FileUtils.rm "#{bundle_py_home}/Resources/Info.plist"
+  FileUtils.rm "#{bundle_py_home}/Resources/Python.app/Contents/Info.plist"
+  
+  # remove site-packages symlink, copy brew python modules and pip install the rest
   src_site_packages = Pathname.new("#{host_py_home}/lib/python#{py_ver}/site-packages")
   bundle_site_packages = Pathname.new("#{bundle_py_home}/lib/python#{py_ver}/site-packages")
   FileUtils.rm bundle_site_packages
@@ -220,11 +221,21 @@ def deploy_python_framework(destination, host_python_exe,
                            bundle_site_packages)
   end
   make_writable(bundle_site_packages)
+  # remove distutils.cfg so pip paths are computed relative to the sys.prefix
+  FileUtils.rm Pathname.new("#{bundle_py_home}/lib/python#{py_ver}/distutils/distutils.cfg")
+  requirements_files.each do |requirements|
+    stdout = execute("#{bundle_py_home}/bin/python -m pip install -r #{requirements}")
+    debug(stdout)
+  end
 
   # fix mpl_toolkit if it is missing __init__
   mpltoolkit_init =
     FileUtils.touch "#{bundle_site_packages}/mpl_toolkits/__init__.py"
 
+  # add sitecustomize module
+  FileUtils.cp SITECUSTOMIZE_FILE, bundle_site_packages,
+               preserve: true
+  
   bundle_site_packages
 end
 
@@ -585,6 +596,7 @@ end
 
 # Bundle paths
 bundle_path = Pathname.new(ARGV[0])
+contents = bundle_path + 'Contents'
 contents_macos = bundle_path + 'Contents/MacOS'
 contents_frameworks = bundle_path + 'Contents/Frameworks'
 # additional executables not detectable by dependency analysis
@@ -596,27 +608,15 @@ python_version_major = python_version_full[0]
 python_version_minor = python_version_full[1]
 so_suffix = ''
 
-# === legacy: can be removed one all builders moved to homebrew HEAD. The lists at the top can then be frozen again ===
-# Allow building with old brew python 3.7 package when brew was fixed for 2/3 compatability
-# plus new HEAD state.
-# We use the presence of sip.so in the top-level site-packages to determine if we are in the legacy mode or HEAD.
-# sip.so is bundled inside PyQt with homebrew at HEAD
-_py_home = host_python_exe.realpath.parent.parent
-_src_site_packages = Pathname.new("#{_py_home}/lib/python#{python_version_major}.#{python_version_minor}/site-packages")
-if Pathname.new("#{_src_site_packages}/sip.so").exist?
-  so_suffix = 'm'
-  BUNDLED_PY_MODULES_COMMON << 'sip.so'
-  BUNDLED_PY_MODULES_MANTIDPLOT.delete('PyQt4/sip.so')
-  BUNDLED_PY_MODULES_WORKBENCH.delete('PyQt5/sip.so')
-end
-# ==== end legacy =======
-
 bundled_packages = BUNDLED_PY_MODULES_COMMON.map { |s| s % "cpython-%d%d%s-darwin" % [python_version_major, python_version_minor, so_suffix] }
+requirements_files = [REQUIREMENTS_FILE]
 # check we have a known bundle
 if bundle_path.to_s.end_with?('MantidWorkbench.app')
   bundled_packages += BUNDLED_PY_MODULES_WORKBENCH
+  requirements_files << REQUIREMENTS_WORKBENCH_FILE
   bundled_qt_plugins = QT_PLUGINS_COMMON + ['platforms', 'printsupport', 'styles']
   host_qt_plugins_dir = QT5_PLUGINS_DIR
+  executables << "#{contents_macos}/MantidWorkbench"
 elsif bundle_path.to_s.end_with?('MantidPlot.app')
   bundled_packages += BUNDLED_PY_MODULES_MANTIDPLOT
   bundled_qt_plugins = QT_PLUGINS_COMMON
@@ -628,8 +628,8 @@ end
 
 # We start with the assumption CMake has installed all required target libraries/executables
 # into the bundle and the main layout exists.
-bundle_py_site_packages = deploy_python_framework(contents_frameworks, host_python_exe,
-                                                  bundled_packages)
+bundle_py_site_packages = deploy_python_framework(contents, host_python_exe,
+                                                  bundled_packages, requirements_files)
 if $PARAVIEW_BUILD_DIR.start_with?('/')
   pv_lib_dir = Pathname.new($PARAVIEW_BUILD_DIR) + 'lib'
   # add bare VTK/ParaView so libraries

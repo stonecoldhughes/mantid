@@ -12,6 +12,7 @@ from qtpy.QtWidgets import QWidget
 
 from mantidqt.utils.qt import load_ui
 from mantidqt.widgets.plotconfigdialog.axestabwidget import AxProperties
+from mantidqt.widgets.plotconfigdialog.colorselector import ColorSelector
 
 
 class AxesTabWidgetView(QWidget):
@@ -22,6 +23,9 @@ class AxesTabWidgetView(QWidget):
         self.ui = load_ui(__file__,
                           'axes_tab_widget.ui',
                           baseinstance=self)
+        self.color_selector_widget = ColorSelector(parent=self)
+        self.gridLayout.replaceWidget(self.color_selector_dummy_widget,
+                                      self.color_selector_widget)
         self.setAttribute(Qt.WA_DeleteOnClose, True)
 
         # Set validator for the axis limit spin boxes
@@ -50,6 +54,18 @@ class AxesTabWidgetView(QWidget):
     def set_title(self, title):
         self.axes_title_line_edit.setText(title)
 
+    def get_show_minor_ticks(self):
+        return self.show_minor_ticks_check_box.isChecked()
+
+    def set_show_minor_ticks(self, check):
+        self.show_minor_ticks_check_box.setChecked(check)
+
+    def get_show_minor_gridlines(self):
+        return self.show_minor_gridlines_check_box.isChecked()
+
+    def set_show_minor_gridlines(self, check):
+        self.show_minor_gridlines_check_box.setChecked(check)
+
     def get_lower_limit(self):
         return float(self.lower_limit_line_edit.text())
 
@@ -62,6 +78,9 @@ class AxesTabWidgetView(QWidget):
     def get_scale(self):
         return self.scale_combo_box.currentText()
 
+    def get_canvas_color(self):
+        return self.color_selector_widget.get_color()
+
     def set_lower_limit(self, limit):
         self.lower_limit_line_edit.setText(str(limit))
 
@@ -73,6 +92,9 @@ class AxesTabWidgetView(QWidget):
 
     def set_scale(self, scale):
         self.scale_combo_box.setCurrentText(scale.title())
+
+    def set_canvas_color(self, color_hex):
+        self.color_selector_widget.set_color(color_hex)
 
     def get_axis(self):
         return self.axis_button_group.checkedButton().text()

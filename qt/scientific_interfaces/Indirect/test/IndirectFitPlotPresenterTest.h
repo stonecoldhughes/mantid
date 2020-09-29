@@ -136,6 +136,9 @@ public:
   MOCK_METHOD1(setBackgroundRangeVisible, void(bool visible));
   MOCK_METHOD1(setHWHMRangeVisible, void(bool visible));
 
+  MOCK_METHOD1(allowRedraws, void(bool state));
+  MOCK_METHOD0(redrawPlots, void());
+
   MOCK_CONST_METHOD1(displayMessage, void(std::string const &message));
 
   /// Public Slots
@@ -313,8 +316,7 @@ public:
     TableDatasetIndex const index(0);
     ON_CALL(*m_fittingModel, getWorkspace(index))
         .WillByDefault(Return(m_ads->retrieveWorkspace("WorkspaceName")));
-
-    EXPECT_CALL(*m_fittingModel, getWorkspace(index)).Times(5);
+    EXPECT_CALL(*m_fittingModel, getWorkspace(index)).Times(3);
 
     m_view->emitSelectedFitDataChanged(index);
   }
@@ -325,8 +327,8 @@ public:
     ON_CALL(*m_fittingModel, getWorkspace(index))
         .WillByDefault(Return(nullptr));
 
-    EXPECT_CALL(*m_fittingModel, getWorkspace(index)).Times(3);
-    EXPECT_CALL(*m_view, clearPreviews()).Times(2);
+    EXPECT_CALL(*m_fittingModel, getWorkspace(index)).Times(2);
+    EXPECT_CALL(*m_view, clearPreviews()).Times(1);
 
     m_view->emitSelectedFitDataChanged(index);
   }
@@ -339,10 +341,10 @@ public:
         .WillByDefault(Return(range));
 
     EXPECT_CALL(*m_fittingModel, getFittingRange(index, IDA::WorkspaceIndex(0)))
-        .Times(2)
+        .Times(1)
         .WillRepeatedly(Return(range));
-    EXPECT_CALL(*m_view, setFitRangeMinimum(1.0)).Times(2);
-    EXPECT_CALL(*m_view, setFitRangeMaximum(2.0)).Times(2);
+    EXPECT_CALL(*m_view, setFitRangeMinimum(1.0)).Times(1);
+    EXPECT_CALL(*m_view, setFitRangeMaximum(2.0)).Times(1);
 
     m_view->emitSelectedFitDataChanged(index);
   }
@@ -421,7 +423,8 @@ public:
     ON_CALL(*m_fittingModel, getWorkspace(index))
         .WillByDefault(Return(m_ads->retrieveWorkspace(workspaceName)));
 
-    EXPECT_CALL(*m_view, clearPreviews()).Times(0);
+    EXPECT_CALL(*m_view, removeFromTopPreview(QString::fromStdString("Guess")))
+        .Times(0);
 
     m_view->emitPlotGuessChanged(true);
   }
@@ -432,7 +435,8 @@ public:
     ON_CALL(*m_fittingModel, getWorkspace(index))
         .WillByDefault(Return(m_ads->retrieveWorkspace("WorkspaceName")));
 
-    EXPECT_CALL(*m_view, clearPreviews()).Times(1);
+    EXPECT_CALL(*m_view, removeFromTopPreview(QString::fromStdString("Guess")))
+        .Times(1);
 
     m_view->emitPlotGuessChanged(false);
   }
@@ -558,22 +562,32 @@ public:
 
   void
   test_that_appendLastDataToSelection_will_set_the_name_of_the_data_selection_if_the_dataSelectionSize_and_numberOfWorkspaces_are_equal() {
-    TableDatasetIndex const index(1);
+    TableDatasetIndex const index1(0);
+    TableDatasetIndex const index2(1);
 
     ON_CALL(*m_view, dataSelectionSize())
         .WillByDefault(Return(TableDatasetIndex(2)));
     ON_CALL(*m_fittingModel, numberOfWorkspaces())
         .WillByDefault(Return(TableDatasetIndex(2)));
+    ON_CALL(*m_fittingModel, createDisplayName(TableDatasetIndex(0)))
+        .WillByDefault(Return("DisplayName-0"));
     ON_CALL(*m_fittingModel, createDisplayName(TableDatasetIndex(1)))
         .WillByDefault(Return("DisplayName-1"));
-    ON_CALL(*m_fittingModel, getWorkspace(index))
+    ON_CALL(*m_fittingModel, getWorkspace(index1))
+        .WillByDefault(Return(m_ads->retrieveWorkspace("WorkspaceName")));
+    ON_CALL(*m_fittingModel, getWorkspace(index2))
         .WillByDefault(Return(m_ads->retrieveWorkspace("WorkspaceName")));
 
-    Expectation createName =
-        EXPECT_CALL(*m_fittingModel, createDisplayName(index)).Times(1);
-    EXPECT_CALL(*m_view, setNameInDataSelection("DisplayName-1", index))
+    Expectation createName1 =
+        EXPECT_CALL(*m_fittingModel, createDisplayName(index1)).Times(1);
+    EXPECT_CALL(*m_view, setNameInDataSelection("DisplayName-0", index1))
         .Times(1)
-        .After(createName);
+        .After(createName1);
+    Expectation createName2 =
+        EXPECT_CALL(*m_fittingModel, createDisplayName(index2)).Times(1);
+    EXPECT_CALL(*m_view, setNameInDataSelection("DisplayName-1", index2))
+        .Times(1)
+        .After(createName2);
 
     m_presenter->appendLastDataToSelection();
   }

@@ -42,6 +42,7 @@ class MaxEntPresenter(object):
         self.phase_table_observer = GenericObserver(self.update_phase_table_options)
         self.calculation_finished_notifier = GenericObservable()
         self.calculation_started_notifier = GenericObservable()
+        self.update_phase_table_options()
 
     @property
     def widget(self):
@@ -52,7 +53,7 @@ class MaxEntPresenter(object):
 
     def clear(self):
         self.view.addItems([])
-        self.view.update_phase_table_combo([])
+        self.view.update_phase_table_combo(['Construct'])
 
     # functions
     def getWorkspaceNames(self):
@@ -67,6 +68,10 @@ class MaxEntPresenter(object):
     def cancel(self):
         if self.maxent_alg is not None:
             self.maxent_alg.cancel()
+
+            # Need to set this as sent as part of calculation finished signal
+            self._maxent_output_workspace_name = get_maxent_workspace_name(
+                self.get_parameters_for_maxent_calculation()['InputWorkspace'])
 
     # turn on button
     def activate(self):
@@ -95,7 +100,7 @@ class MaxEntPresenter(object):
     # kills the thread at end of execution
     def handleFinished(self):
         self.activate()
-        self.calculation_finished_notifier.notify_subscribers()
+        self.calculation_finished_notifier.notify_subscribers(self._maxent_output_workspace_name)
 
     def handle_error(self, error):
         self.activate()
@@ -160,6 +165,10 @@ class MaxEntPresenter(object):
         maxent_output_options = self.get_maxent_output_options()
         self.load._frequency_context.add_maxEnt(run, maxent_workspace)
         self.add_optional_outputs_to_ADS(alg, maxent_output_options, base_name, directory)
+
+        # Storing this on the class so it can be sent as part of the calculation
+        # finished signal.
+        self._maxent_output_workspace_name = base_name
 
     def get_maxent_output_options(self):
         output_options = {}

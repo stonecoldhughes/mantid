@@ -18,6 +18,9 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS)
 # Prevent deprecation errors from std::tr1 in googletest until it is fixed
 # upstream. In MSVC 2017 and later
 add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
+# Suppress warnings about std::iterator as a base. TBB emits this warning
+# and it is not yet fixed.
+add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 
 # ##############################################################################
 # Additional compiler flags
@@ -54,37 +57,13 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zm${VISUALSTUDIO_COMPILERHEAPLIMIT}")
 endif()
 
+# HDF5 uses threads::threads target
+find_package (Threads)
+
 # ##############################################################################
 # Qt5 is always in the same place
 # ##############################################################################
 set(Qt5_DIR ${THIRD_PARTY_DIR}/lib/qt5/lib/cmake/Qt5)
-
-# ##############################################################################
-# If required, find tcmalloc
-# ##############################################################################
-# Not ready for production use with MSVC 2015
-option(USE_TCMALLOC "If true, link with tcmalloc" OFF)
-# If not wanted, just carry on without it
-if(USE_TCMALLOC)
-  # Only link in release configurations. There seems to be problem linking in
-  # debug mode
-  set(TCMALLOC_LIBRARIES optimized
-                         "${CMAKE_LIBRARY_PATH}/libtcmalloc_minimal.lib"
-  )
-  # Use an alternate variable name so that it is only set on Windows
-  set(TCMALLOC_LIBRARIES_LINKTIME ${TCMALLOC_LIBRARIES})
-  set(_configs RELEASE RELWITHDEBINFO MINSIZEREL)
-  set(_targets EXE SHARED)
-  foreach(_tgt ${_targets})
-    foreach(_cfg ${_configs})
-      set(CMAKE_${_tgt}_LINKER_FLAGS_${_cfg}
-          "${CMAKE_${_tgt}_LINKER_FLAGS_${_cfg}} /INCLUDE:__tcmalloc"
-      )
-    endforeach()
-  endforeach()
-else(USE_TCMALLOC)
-  message(STATUS "TCMalloc will not be included.")
-endif()
 
 option(CONSOLE "Switch for enabling/disabling the console" ON)
 
@@ -118,6 +97,13 @@ else()
   set(MSVC_IDE_LOCATION "${MSVC_IDE_LOCATION}/Common7/IDE")
 endif()
 
+# Setup debugger environment to launch in VS without setting paths
+set(MSVC_BIN_DIR ${PROJECT_BINARY_DIR}/bin/$<CONFIG>)
+set(MSVC_IDE_ENV "\
+PYTHONPATH=${MSVC_BIN_DIR}\n\
+PYTHONHOME=${MSVC_PYTHON_EXECUTABLE_DIR}\n\
+PATH=${THIRD_PARTY_DIR}/bin$<SEMICOLON>${THIRD_PARTY_DIR}/lib/qt5/bin$<SEMICOLON>%PATH%")
+
 configure_file(
   ${WINDOWS_BUILDCONFIG}/command-prompt.bat.in
   ${PROJECT_BINARY_DIR}/command-prompt.bat @ONLY
@@ -142,15 +128,9 @@ configure_file(
 # ##############################################################################
 set(PACKAGING_DIR ${PROJECT_SOURCE_DIR}/buildconfig/CMake/Packaging)
 # build version
-if(WITH_PYTHON3)
-  set(MANTIDPYTHON_PREAMBLE
-      "set PYTHONHOME=${MSVC_PYTHON_EXECUTABLE_DIR}\nset PATH=%_BIN_DIR%;%_BIN_DIR%\\PVPlugins\\PVPlugins;%PATH%"
-  )
-else()
-  set(MANTIDPYTHON_PREAMBLE
-      "call %~dp0..\\..\\thirdpartypaths.bat\nset PATH=%_BIN_DIR%;%_BIN_DIR%\\PVPlugins\\PVPlugins;%PATH%"
-  )
-endif()
+set(MANTIDPYTHON_PREAMBLE
+    "set PYTHONHOME=${MSVC_PYTHON_EXECUTABLE_DIR}\nset PATH=%_BIN_DIR%;%_BIN_DIR%\\PVPlugins\\PVPlugins;%PATH%"
+)
 
 if(MAKE_VATES)
   set(PARAVIEW_PYTHON_PATHS
@@ -159,8 +139,6 @@ if(MAKE_VATES)
 else()
   set(PARAVIEW_PYTHON_PATHS "")
 endif()
-
-set(MSVC_BIN_DIR ${PROJECT_BINARY_DIR}/bin/$<CONFIG>)
 
 configure_file(
   ${PACKAGING_DIR}/mantidpython.bat.in
@@ -175,11 +153,6 @@ file(
 # install version
 set(MANTIDPYTHON_PREAMBLE
     "set PYTHONHOME=%_BIN_DIR%\nset PATH=%_BIN_DIR%;%_BIN_DIR%\\..\\plugins;%_BIN_DIR%\\..\\PVPlugins;%PATH%"
-)
-
-# Semi-colon gen exp prevents future generators converting to CMake lists
-set(MSVC_IDE_ENV
-    "PYTHONPATH=${MSVC_BIN_DIR}$<SEMICOLON>PYTHONHOME=${MSVC_PYTHON_EXECUTABLE_DIR}"
 )
 
 if(MAKE_VATES)
@@ -219,11 +192,13 @@ set_target_properties(
 # ##############################################################################
 set(BIN_DIR bin)
 set(LIB_DIR ${BIN_DIR})
+set(SITE_PACKAGES ${LIB_DIR})
 # This is the root of the plugins directory
 set(PLUGINS_DIR plugins)
 
 set(WORKBENCH_BIN_DIR ${BIN_DIR})
 set(WORKBENCH_LIB_DIR ${LIB_DIR})
+set(WORKBENCH_SITE_PACKAGES ${LIB_DIR})
 set(WORKBENCH_PLUGINS_DIR ${PLUGINS_DIR})
 
 # Separate directory of plugins to be discovered by the ParaView framework These

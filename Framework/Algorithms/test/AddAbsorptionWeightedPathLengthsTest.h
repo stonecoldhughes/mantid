@@ -53,8 +53,9 @@ public:
     // make beam v narrow so simulated paths all pass through sphere centre
     auto &paramMap = peaksWS->instrumentParameters();
     auto parametrizedSource = parametrizedInstrument->getSource();
-    paramMap.add("double", parametrizedSource.get(), "beam-width", 0.000001);
-    paramMap.add("double", parametrizedSource.get(), "beam-height", 0.000001);
+    paramMap.addString(parametrizedSource.get(), "beam-shape", "Slit");
+    paramMap.addDouble(parametrizedSource.get(), "beam-width", 0.000001);
+    paramMap.addDouble(parametrizedSource.get(), "beam-height", 0.000001);
 
     Mantid::Algorithms::AddAbsorptionWeightedPathLengths alg;
     TS_ASSERT_THROWS_NOTHING(alg.initialize());
@@ -78,6 +79,9 @@ public:
     const int NPEAKS = 10;
     // this sets up a sample with a spherical shape of radius = 1mm
     auto peaksWS = WorkspaceCreationHelper::createPeaksWorkspace(NPEAKS);
+    auto shape =
+        ComponentCreationHelper::createSphere(0.001, {0, 0, 0}, "sample-shape");
+    peaksWS->mutableSample().setShape(shape);
     setMaterialToVanadium(peaksWS);
 
     Mantid::Algorithms::AddAbsorptionWeightedPathLengths alg;
@@ -161,13 +165,8 @@ private:
 
     peaksWS->setInstrument(testInst);
 
-    // setInstrument doesn't update the workspace's sample from the sample
-    // details in the instrument's component assembly for some reason. So
-    // explicitly set the shape here
-    auto sampleShapeComponent =
-        std::dynamic_pointer_cast<const IObjComponent>(testInst->getSample());
     auto shape =
-        std::shared_ptr<IObject>(sampleShapeComponent->shape()->clone());
+        ComponentCreationHelper::createSphere(0.001, {0, 0, 0}, "sample-shape");
     peaksWS->mutableSample().setShape(shape);
   }
   void setMaterialToVanadium(std::shared_ptr<PeaksWorkspace> peaksWS) {

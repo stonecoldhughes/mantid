@@ -30,6 +30,7 @@ namespace MantidQt {
 namespace MantidWidgets {
 class InstrumentActor;
 class CollapsiblePanel;
+class CollapsibleStack;
 class ProjectionSurface;
 class ComponentInfoController;
 class DetectorPlotController;
@@ -77,6 +78,7 @@ public:
     PeakAlign,
     DrawEllipse,
     DrawRectangle,
+    DrawSector,
     DrawFree,
     EditShape
   };
@@ -124,6 +126,7 @@ private slots:
 private:
   void showEvent(QShowEvent * /*unused*/) override;
   QColor getShapeBorderColor() const;
+  void collapsePlotPanel();
 
   /* Pick tab controls */
   MiniPlot *m_plot;     ///< Miniplot to display data in the detectors
@@ -143,6 +146,7 @@ private:
   /// ring selection region
   QPushButton *m_ring_rectangle; ///< Button switching on drawing a rectangular
   /// ring selection region
+  QPushButton *m_sector; ///< Button switching on drawing a circular sector
   QPushButton
       *m_free_draw; ///< Button switching on drawing a region of arbitrary shape
   QPushButton *m_edit; ///< Button switching on edditing the selection region

@@ -1,6 +1,6 @@
 # Mantid Repository : https://github.com/mantidproject/mantid
 #
-# Copyright &copy; 2018 ISIS Rutherford Appleton Laboratory UKRI,
+# Copyright &copy; 2020 ISIS Rutherford Appleton Laboratory UKRI,
 #   NScD Oak Ridge National Laboratory, European Spallation Source,
 #   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 # SPDX - License - Identifier: GPL - 3.0 +
@@ -52,15 +52,24 @@ class Tester(object):
 
         return correct_data
 
+    @staticmethod
+    def _cull_imaginary_modes(frequencies, displacements):
+        from abins.constants import ACOUSTIC_PHONON_THRESHOLD
+        finite_mode_indices = frequencies > ACOUSTIC_PHONON_THRESHOLD
+        return (frequencies[finite_mode_indices], displacements[:, finite_mode_indices])
+
     def _check_reader_data(self, correct_data=None, data=None, filename=None, extension=None):
         # check data
         correct_k_points = correct_data["datasets"]["k_points_data"]
         items = data["datasets"]["k_points_data"]
 
         for k in correct_k_points["frequencies"]:
-            self.assertEqual(True, np.allclose(correct_k_points["frequencies"][k], items["frequencies"][k]))
-            self.assertEqual(True, np.allclose(correct_k_points["atomic_displacements"][k],
-                                               items["atomic_displacements"][k]))
+            correct_frequencies, correct_displacements = self._cull_imaginary_modes(
+                correct_k_points["frequencies"][k], correct_k_points["atomic_displacements"][k])
+            calc_frequencies, calc_displacements = self._cull_imaginary_modes(
+                items["frequencies"][k], items["atomic_displacements"][k])
+            self.assertEqual(True, np.allclose(correct_frequencies, calc_frequencies))
+            self.assertEqual(True, np.allclose(correct_displacements, calc_displacements))
             self.assertEqual(True, np.allclose(correct_k_points["k_vectors"][k], items["k_vectors"][k]))
             self.assertEqual(correct_k_points["weights"][k], items["weights"][k])
 
@@ -77,12 +86,6 @@ class Tester(object):
         # check attributes
         self.assertEqual(correct_data["attributes"]["hash"], data["attributes"]["hash"])
         self.assertEqual(correct_data["attributes"]["ab_initio_program"], data["attributes"]["ab_initio_program"])
-        # advanced_parameters is stored as a str but we unpack/compare to dict
-        # so comparison will tolerate unimportant formatting changes
-
-        self.assertEqual(correct_data["attributes"]["advanced_parameters"],
-                         json.loads(data["attributes"]["advanced_parameters"]))
-
         try:
             self.assertEqual(abins.test_helpers.find_file(filename + "." + extension),
                              data["attributes"]["filename"])
@@ -109,9 +112,13 @@ class Tester(object):
         items = loaded_data["k_points_data"]
 
         for k in correct_items["frequencies"]:
-            self.assertEqual(True, np.allclose(correct_items["frequencies"][k], items["frequencies"][k]))
-            self.assertEqual(True, np.allclose(correct_items["atomic_displacements"][k],
-                                               items["atomic_displacements"][k]))
+            correct_frequencies, correct_displacements = self._cull_imaginary_modes(
+                correct_items["frequencies"][k], correct_items["atomic_displacements"][k])
+            calc_frequencies, calc_displacements = self._cull_imaginary_modes(
+                items["frequencies"][k], items["atomic_displacements"][k])
+
+            self.assertEqual(True, np.allclose(correct_frequencies, calc_frequencies))
+            self.assertEqual(True, np.allclose(correct_displacements, calc_displacements))
             self.assertEqual(True, np.allclose(correct_items["k_vectors"][k], items["k_vectors"][k]))
             self.assertEqual(correct_items["weights"][k], items["weights"][k])
 
@@ -180,12 +187,12 @@ class Tester(object):
     @staticmethod
     def _get_reader_data(ab_initio_reader):
         """
-        :param ab_initio_reader: object of type  AbInitioProgram
+        :param ab_initio_reader: object of type AbInitioLoader
         :returns: read data
         """
         abins_type_data = ab_initio_reader.read_vibrational_or_phonon_data()
         data = {"datasets": abins_type_data.extract(),
-                "attributes": ab_initio_reader._clerk._attributes
+                "attributes": ab_initio_reader._clerk._attributes.copy()
                 }
         data["datasets"].update({"unit_cell": ab_initio_reader._clerk._data["unit_cell"]})
         return data
@@ -205,10 +212,9 @@ class Tester(object):
         """
 
         data = cls._get_reader_data(ab_initio_reader)
-        # Unpack advanced parameters into a dictionary for ease of comparison later.
-        # It might be wise to remove this and store escaped strings for consistency,
-        # but for now we don't want to disturb the old test data so follow its format.
-        data["attributes"]["advanced_parameters"] = json.loads(data["attributes"]["advanced_parameters"])
+
+        # Discard advanced_parameters cache as this is not relevant to loader tests
+        del data["attributes"]["advanced_parameters"]
 
         displacements = data["datasets"]["k_points_data"].pop("atomic_displacements")
         for i, eigenvector in displacements.items():

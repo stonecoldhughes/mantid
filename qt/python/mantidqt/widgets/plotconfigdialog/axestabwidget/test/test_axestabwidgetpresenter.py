@@ -34,6 +34,8 @@ class AxesTabWidgetPresenterTest(unittest.TestCase):
         ax.set_ylabel(cls.y_label)
         cls.y_scale = 'Log'
         ax.set_yscale(cls.y_scale)
+        cls.canvas_color = (1.0, 1.0, 0.0, 1.0)
+        ax.set_facecolor(cls.canvas_color)
         ax2 = cls.fig.add_subplot(212)
         ax2.plot([-1000000, 10000], [10, 12], 'rx')
 
@@ -72,6 +74,37 @@ class AxesTabWidgetPresenterTest(unittest.TestCase):
                     presenter.current_view_props.ylabel)
                 ax_mock.set_yscale.assert_called_once_with(
                     presenter.current_view_props.yscale)
+                ax_mock.minorticks_on.assert_called_once()
+                ax_mock.set_facecolor.assert_called_once_with(
+                    presenter.current_view_props.canvas_color)
+
+    def test_apply_all_properties_calls_setters_with_correct_properties(self):
+        ax_mock_1 = mock.MagicMock()
+        ax_mock_2 = mock.MagicMock()
+        presenter = self._generate_presenter()
+        presenter.axes_names_dict = {'1': ax_mock_1, '2': ax_mock_2}
+        with mock.patch.object(presenter, 'get_selected_ax', lambda: ax_mock_1):
+            with mock.patch.object(presenter, 'update_view', lambda: None):
+                presenter.current_view_props = presenter.get_selected_ax_properties()
+                presenter.apply_all_properties()
+                # Mock properties object and view then test that the view's setters
+                # are called with the correct property values
+                for key in presenter.axes_names_dict.keys():
+                    ax_mock = presenter.axes_names_dict[key]
+                    ax_mock.set_xlim.assert_called_once_with(
+                        presenter.current_view_props.xlim)
+                    ax_mock.set_xlabel.assert_called_once_with(
+                        presenter.current_view_props.xlabel)
+                    ax_mock.set_xscale.assert_called_once_with(
+                        presenter.current_view_props.xscale)
+                    ax_mock.set_ylim.assert_called_once_with(
+                        presenter.current_view_props.ylim)
+                    ax_mock.set_ylabel.assert_called_once_with(
+                        presenter.current_view_props.ylabel)
+                    ax_mock.set_yscale.assert_called_once_with(
+                        presenter.current_view_props.yscale)
+                    ax_mock.set_facecolor.assert_called_once_with(
+                        presenter.current_view_props.canvas_color)
 
     def test_get_axes_names_dict(self):
         actual_dict = get_axes_names_dict(self.fig)
@@ -96,6 +129,9 @@ class AxesTabWidgetPresenterTest(unittest.TestCase):
         self.assertEqual('Linear', actual_props.xscale)
         self.assertEqual('Y', actual_props.ylabel)
         self.assertEqual('Log', actual_props.yscale)
+        self.assertEqual(False, actual_props.minor_ticks)
+        self.assertEqual(False, actual_props.minor_gridlines)
+        self.assertEqual(self.canvas_color, actual_props.canvas_color)
 
     def test_populate_select_axes_combo_box_called_once_on_construction(self):
         presenter = self._generate_presenter()
