@@ -142,7 +142,7 @@ class PlotsSaverTest(unittest.TestCase):
 
     def test_get_dict_from_axes(self):
         self.plot_saver.figure_creation_args = [{"function": "plot"}]
-        return_value = self.plot_saver.get_dict_for_axes(self.fig.axes[0])
+        return_value = self.plot_saver.get_dict_from_axes(self.fig.axes[0])
 
         expected_value = self.loader_plot_dict["axes"][0]
 

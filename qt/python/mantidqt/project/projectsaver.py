@@ -8,6 +8,7 @@
 #
 import os
 from json import dump
+import numpy as np
 
 from mantid import logger
 from mantid.api import AnalysisDataService as ADS
@@ -52,7 +53,7 @@ class ProjectSaver(object):
             saved_workspaces = ADS.getObjectNames()
 
         # Generate plots
-        plots_to_save_list = PlotsSaver().save_plots(plots_to_save, not project_recovery)
+        plots_to_save_list, lines_to_save_list = PlotsSaver().save_plots(plots_to_save, not project_recovery)
 
         # Save interfaces
         if interfaces_to_save is None:
@@ -63,6 +64,7 @@ class ProjectSaver(object):
         # Pass dicts to Project Writer
         writer = ProjectWriter(workspace_names=saved_workspaces,
                                plots_to_save=plots_to_save_list,
+                               lines_to_save=lines_to_save_list,
                                interfaces_to_save=interfaces,
                                save_location=file_name,
                                project_file_ext=self.project_file_ext)
@@ -87,11 +89,12 @@ class ProjectSaver(object):
 
 
 class ProjectWriter(object):
-    def __init__(self, save_location, workspace_names, project_file_ext, plots_to_save, interfaces_to_save):
+    def __init__(self, save_location, workspace_names, project_file_ext, plots_to_save, lines_to_save, interfaces_to_save):
         self.workspace_names = workspace_names
         self.file_name = save_location
         self.project_file_ext = project_file_ext
         self.plots_to_save = plots_to_save
+        self.lines_to_save = lines_to_save
         self.interfaces_to_save = interfaces_to_save
 
     def write_out(self):
@@ -116,3 +119,10 @@ class ProjectWriter(object):
             logger.debug("Full error: {}".format(e))
         except Exception as e:
             logger.warning("Unknown error occurred. Full detail: {}".format(e))
+
+        save_directory = os.path.dirname(self.file_name)
+        try:
+            for line_dict in self.lines_to_save:
+                np.save(os.path.join(save_directory, line_dict['filename']), line_dict['nparray'])
+        except Exception as e:
+            logger.warning(f"Unable to save line. Full detail: {e}")

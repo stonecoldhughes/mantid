@@ -29,24 +29,40 @@ class PlotsSaver(object):
     def save_plots(self, plot_dict, is_project_recovery=False):
         # if arguement is none return empty dictionary
         if plot_dict is None:
-            return []
+            return [], []
 
         plot_list = []
-        for index in plot_dict:
+        lines_list = []
+        for plot_index in plot_dict:
             try:
-                plot_list.append(self.get_dict_from_fig(plot_dict[index].canvas.figure))
+                fig_dict = self.get_dict_from_fig(plot_dict[plot_index].canvas.figure)
+                lines_list += self.get_lines_to_save(fig_dict, plot_index)
+                plot_list.append(fig_dict)
             except BaseException as e:
                 # Catch all errors in here so it can fail silently-ish, if this is happening on all plots make sure you
                 # have built your project.
                 if isinstance(e, KeyboardInterrupt):
                     raise KeyboardInterrupt
 
-                error_string = "Plot: " + str(index) + " was not saved. Error: " + str(e)
+                error_string = "Plot: " + str(plot_index) + " was not saved. Error: " + str(e)
                 if not is_project_recovery:
                     logger.warning(error_string)
                 else:
                     logger.debug(error_string)
-        return plot_list
+        return plot_list, lines_list
+
+    def get_lines_to_save(self, fig_dict, plot_index):
+        """Assigns a filename to each line whose data needs to be saved to a .npy
+        and extracts its data into a new lines_to_save list."""
+        lines_to_save = []
+        for ax_index, ax_dict in enumerate(fig_dict['axes']):
+            for line_index, line_dict in enumerate(ax_dict['lines']):
+                if line_dict['data']:
+                    filename = f"line{plot_index}-{ax_index}-{line_index}.npy"
+                    line_dict['data']['filename'] = filename
+                    lines_to_save.append(line_dict['data'].copy())
+                    del line_dict['data']['nparray']
+        return lines_to_save
 
     def get_dict_from_fig(self, fig):
         axes_list = []
@@ -58,8 +74,7 @@ class PlotsSaver(object):
             except AttributeError:
                 logger.debug("Axis had an axis without creation_args - Common with a Colorfill plot")
                 continue
-            axes_list.append(self.get_dict_for_axes(ax))
-
+            axes_list.append(self.get_dict_from_axes(ax))
         fig_dict = {"creationArguments": create_list,
                     "axes": axes_list,
                     "label": fig._label,
@@ -89,7 +104,7 @@ class PlotsSaver(object):
 
         return cb_dict
 
-    def get_dict_for_axes(self, ax):
+    def get_dict_from_axes(self, ax):
         ax_dict = {"properties": self.get_dict_from_axes_properties(ax),
                    "title": ax.get_title(),
                    "xAxisTitle": ax.get_xlabel(),
@@ -99,7 +114,8 @@ class PlotsSaver(object):
         # Get lines from the axes and store it's data
         lines_list = []
         for index, line in enumerate(ax.lines):
-            lines_list.append(self.get_dict_from_line(line, index))
+            save_line_data = True if ax.get_workspace_name_from_artist(line) is None else False
+            lines_list.append(self.get_dict_from_line(line, index, save_data=save_line_data))
         ax_dict["lines"] = lines_list
 
         texts_list = []
@@ -204,7 +220,7 @@ class PlotsSaver(object):
             grid_style["gridOn"] = False
         return grid_style
 
-    def get_dict_from_line(self, line, index=0):
+    def get_dict_from_line(self, line, index=0, save_data=False):
         line_dict = {"lineIndex": index,
                      "label": line.get_label(),
                      "alpha": line.get_alpha(),
@@ -212,7 +228,14 @@ class PlotsSaver(object):
                      "lineWidth": line.get_linewidth(),
                      "lineStyle": line.get_linestyle(),
                      "markerStyle": self.get_dict_from_marker_style(line),
-                     "errorbars": self.get_dict_for_errorbars(line)}
+                     "errorbars": self.get_dict_for_errorbars(line),
+                     # we decide what the filename for the line data should be when
+                     # we have access to plot and and axis indices.
+                     "data": {
+                         "filename": None,  # the name of the .npy file to write array to
+                         'nparray': line._xy
+                     } if save_data else None
+        }
         if line_dict["alpha"] is None:
             line_dict["alpha"] = 1
         return line_dict
