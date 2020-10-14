@@ -8,6 +8,7 @@
 #
 import matplotlib
 import unittest
+import unittest.mock as mock
 
 from mantid.api import AnalysisDataService as ADS
 from mantid.simpleapi import CreateSampleWorkspace
@@ -61,7 +62,8 @@ class PlotsSaverTest(unittest.TestCase):
                                              u'markerSize': 6.0,
                                              u'markerType': u'None',
                                              u'zOrder': 2},
-                            u'errorbars': {u'exists': False}}],
+                            u'errorbars': {u'exists': False},
+                            u'data': None}],
                 u'properties': {u'axisOn': True, u'bounds': (0.0, 0.0, 0.0, 0.0),
                                 u'dynamic': True,
                                 u'frameOn': True,
@@ -129,7 +131,15 @@ class PlotsSaverTest(unittest.TestCase):
         plot_dict = {}
         return_value = self.plot_saver.save_plots(plot_dict)
 
-        self.assertEqual(return_value, [])
+        self.assertEqual(([], []), return_value)
+
+    def test_save_plots_with_lines(self):
+        fig = self.fig
+        fig.axes[0].axhline(0, 0, 1)
+
+        plot_dict = {0: fig, 1: fig}
+        return_value = self.plot_saver.save_plots(plot_dict)
+        self.assertEqual(1, 1)
 
     def test_get_dict_from_fig(self):
         self.fig.axes[0].creation_args = [{u"specNum": 2, "function": "plot"}]
@@ -148,6 +158,70 @@ class PlotsSaverTest(unittest.TestCase):
 
         self.maxDiff = None
         self.assertDictEqual(return_value, expected_value)
+
+    def test_get_dict_from_axes_differentiates_workspace_line(self):
+        fig = self.fig
+        ax = fig.axes[0]
+        ax.axhline(y=1, xmin=0, xmax=1)
+        self.plot_saver.get_dict_from_line = mock.Mock()
+
+        self.plot_saver.get_dict_from_axes(ax)
+        self.plot_saver.get_dict_from_line.assert_has_calls(
+            [mock.call(ax.lines[0], 0, save_data=False), mock.call(ax.lines[1], 1, save_data=True)],
+            any_order=False
+        )
+
+    def test_get_dict_from_line_correctly_saves_line_data(self):
+        self.plot_saver.figure_creation_args = [{"function": "plot"}]
+        ax = self.fig.axes[0]
+
+        # In this case, the line that is on the axes is associated with a workspace,
+        # but here we are testing specifically whether line data is saved, and how it is saved.
+        return_value = self.plot_saver.get_dict_from_line(ax.lines[0], index=0, save_data=False)
+        self.assertEqual(return_value['data'], None)
+        return_value = self.plot_saver.get_dict_from_line(ax.lines[0], index=0, save_data=True)
+        self.assertDictEqual(return_value['data'], {'filename': None, 'nparray': ax.lines[0]._xy})
+
+    def test_get_lines_to_save(self):
+        fig_dict = {
+            "axes": [
+                {"lines": [
+                    {"data": None},
+                    # We use strings as placeholders since assertions on np arrays in dictionaries
+                    # is complex. We only need to assert that the "nparray" is not modified by
+                    # get_lines_to_save when copied over to the return result.
+                    {"data": {"filename": None, "nparray": "array placeholder 0"}}
+                ]},
+                {"lines": [
+                    {"data": {"filename": None, "nparray": "array placeholder 1"}}
+                ]}
+            ]
+        }
+        # Should have removed 'nparray' key (so we don't save line data in json) and
+        # set correct filename.
+        expected_fig_dict = {
+            "axes": [
+                {"lines": [
+                    {"data": None},
+                    {"data": {'filename': 'line0-0-1.npy'}}
+                ]},
+                {"lines": [
+                    {"data": {'filename': 'line0-1-0.npy'}}
+                ]}
+            ]
+        }
+        # Should have set correct filename and correctly copied data to the return list.
+        expected_result = [
+            {'filename': 'line0-0-1.npy', "nparray": "array placeholder 0"},
+            {'filename': 'line0-1-0.npy', "nparray": "array placeholder 1"}
+        ]
+
+        return_result = self.plot_saver.get_lines_to_save(fig_dict, 0)
+
+        self.assertDictEqual(fig_dict, expected_fig_dict)
+        self.assertEqual(len(return_result), len(expected_result))
+        for return_line_dict, expected_line_dict in zip(return_result, expected_result):
+            self.assertDictEqual(return_line_dict, expected_line_dict)
 
     def test_get_dict_from_axes_properties(self):
         return_value = self.plot_saver.get_dict_from_axes_properties(self.fig.axes[0])
