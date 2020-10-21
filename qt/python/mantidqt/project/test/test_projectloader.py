@@ -69,6 +69,8 @@ class ProjectLoaderTest(unittest.TestCase):
         loader.load_project(working_directory, load_workspaces=False)
         self.assertEqual(0, loader.workspace_loader.load_workspaces.call_count)
 
+    def test_load_lines(self):
+
 
 class ProjectReaderTest(unittest.TestCase):
     def setUp(self):

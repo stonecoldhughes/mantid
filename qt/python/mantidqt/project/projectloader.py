@@ -6,10 +6,12 @@
 # SPDX - License - Identifier: GPL - 3.0 +
 #  This file is part of the mantidqt package
 #
+import glob
 import json
 import os
 import re
 
+import numpy as np
 from qtpy.QtCore import Qt
 from mantidqt.project.workspaceloader import WorkspaceLoader
 from mantidqt.project.plotsloader import PlotsLoader
@@ -63,7 +65,8 @@ class ProjectLoader(object):
         if workspace_success:
             # Load plots
             if self.project_reader.plot_list is not None:
-                self.plot_loader.load_plots(self.project_reader.plot_list)
+                line_data = self.load_lines(os.path.dirname(file_name))
+                self.plot_loader.load_plots(self.project_reader.plot_list, line_data)
 
             # Load interfaces
             if self.project_reader.interface_list is not None:
@@ -83,6 +86,18 @@ class ProjectLoader(object):
                 if isinstance(e, KeyboardInterrupt):
                     raise
                 logger.warning("Project Loader: An interface could not be loaded error: " + str(e))
+
+    def load_lines(self, proj_dir):
+        """Loads .npy files for all lines. Returns np arrays for each line in a dictionary."""
+        line_data = {}
+        os.chdir(proj_dir)
+        files = glob.glob("*.npy")
+
+        for filename in files:
+            # np.load returns an array containing the dictionary. Use tolist to access it.
+            line_data[filename] = np.load(filename, allow_pickle=True).tolist()
+
+        return line_data
 
 
 class ProjectReader(object):

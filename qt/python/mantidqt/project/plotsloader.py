@@ -18,6 +18,7 @@ from mantid.plots.legend import LegendProperties
 from mantid.plots.plotfunctions import create_subplots
 # Constants set in workbench.plotting.functions but would cause backwards reliability
 from mantidqt.plotting.functions import pcolormesh
+from matplotlib.transforms import Affine2D
 
 SUBPLOT_WSPACE = 0.5
 SUBPLOT_HSPACE = 0.5
@@ -27,20 +28,19 @@ class PlotsLoader(object):
     def __init__(self):
         self.color_bar_remade = False
 
-    def load_plots(self, plots_list):
+    def load_plots(self, plots_list, line_data_dict):
         if plots_list is None:
             return
-
         for plot_ in plots_list:
             try:
-                self.make_fig(plot_)
+                self.make_fig(plot_, line_data_dict)
             except BaseException as e:
                 # Catch all errors in here so it can fail silently-ish
                 if isinstance(e, KeyboardInterrupt):
                     raise KeyboardInterrupt(str(e))
                 logger.warning("A plot was unable to be loaded from the save file. Error: " + str(e))
 
-    def make_fig(self, plot_dict, create_plot=True):
+    def make_fig(self, plot_dict, line_data_dict, create_plot=True):
         """
         This method currently only considers single matplotlib.axes.Axes based figures as that is the most common case
         :param plot_dict: dictionary; A dictionary of various items intended to recreate a figure
@@ -65,6 +65,21 @@ class PlotsLoader(object):
                     workspace = ADS.retrieve(workspace_name)
                     self.plot_func(workspace, ax, ax.figure, cargs)
             ax.creation_args = creation_args_copy
+
+        for ax_index, ax_dict in enumerate(plot_dict['axes']):
+            for line_index, line_dict in enumerate(ax_dict['lines']):
+                if line_dict['data']:
+                    filename = line_dict['data']['filename']
+                    try:
+                        data = line_data_dict[filename]['coords']
+                        transform = Affine2D()
+                        transform.set_matrix(line_data_dict[filename]['transform'])
+                        axes_list[ax_index].plot(data[:, 0], data[:, 1], transform=transform)
+                    except KeyError as err:
+                        logger.information(
+                            "A line could not be loaded because it's data was not found in the project directiory." +
+                            f"Full detail: {err}"
+                        )
 
         # Update the fig
         fig._label = plot_dict["label"]

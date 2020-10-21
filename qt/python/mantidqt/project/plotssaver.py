@@ -32,11 +32,11 @@ class PlotsSaver(object):
             return [], []
 
         plot_list = []
-        lines_list = []
+        lines_dict = {}
         for plot_index in plot_dict:
             try:
                 fig_dict = self.get_dict_from_fig(plot_dict[plot_index].canvas.figure)
-                lines_list += self.get_lines_to_save(fig_dict, plot_index)
+                lines_dict.update(self.get_lines_to_save(fig_dict, plot_index))
                 plot_list.append(fig_dict)
             except BaseException as e:
                 # Catch all errors in here so it can fail silently-ish, if this is happening on all plots make sure you
@@ -49,19 +49,24 @@ class PlotsSaver(object):
                     logger.warning(error_string)
                 else:
                     logger.debug(error_string)
-        return plot_list, lines_list
+        return plot_list, lines_dict
 
     def get_lines_to_save(self, fig_dict, plot_index):
         """Assigns a filename to each line whose data needs to be saved to a .npy
         and extracts its data into a new lines_to_save list."""
-        lines_to_save = []
+        lines_to_save = {}
         for ax_index, ax_dict in enumerate(fig_dict['axes']):
             for line_index, line_dict in enumerate(ax_dict['lines']):
                 if line_dict['data']:
-                    filename = f"line{plot_index}-{ax_index}-{line_index}.npy"
+                    filename = f"line{plot_index}{ax_index}{line_index}.npy"
+                    lines_to_save[filename] = {
+                        "coords": line_dict['data']['coords'],
+                        "transform": line_dict['data']['transform']
+                    }
+                    # We only want to write the filename of this line to the .mtdproj
                     line_dict['data']['filename'] = filename
-                    lines_to_save.append(line_dict['data'].copy())
-                    del line_dict['data']['nparray']
+                    del line_dict['data']['coords']
+                    del line_dict['data']['transform']
         return lines_to_save
 
     def get_dict_from_fig(self, fig):
@@ -233,7 +238,8 @@ class PlotsSaver(object):
                      # we have access to plot and and axis indices.
                      "data": {
                          "filename": None,  # the name of the .npy file to write array to
-                         'nparray': line._xy
+                         'coords': line._xy,
+                         'transform': line.get_transform().get_matrix()
                      } if save_data else None
         }
         if line_dict["alpha"] is None:
@@ -241,14 +247,19 @@ class PlotsSaver(object):
         return line_dict
 
     def get_dict_for_errorbars(self, line):
-        if self.figure_creation_args[0]["function"] == "errorbar":
-            return {"exists": True,
-                    "dashCapStyle": line.get_dash_capstyle(),
-                    "dashJoinStyle": line.get_dash_joinstyle(),
-                    "solidCapStyle": line.get_solid_capstyle(),
-                    "solidJoinStyle": line.get_solid_joinstyle()}
-        else:
+        if self.figure_creation_args == []:
+            # Plots that have no workspaces have no creation args.
             return {"exists": False}
+
+        if not self.figure_creation_args[0]["function"] == "errorbar":
+            return {"exists": False}
+
+        return {"exists": True,
+                "dashCapStyle": line.get_dash_capstyle(),
+                "dashJoinStyle": line.get_dash_joinstyle(),
+                "solidCapStyle": line.get_solid_capstyle(),
+                "solidJoinStyle": line.get_solid_joinstyle()}
+
 
     @staticmethod
     def get_dict_from_marker_style(line):

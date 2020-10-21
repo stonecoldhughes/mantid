@@ -122,7 +122,7 @@ class ProjectWriter(object):
 
         save_directory = os.path.dirname(self.file_name)
         try:
-            for line_dict in self.lines_to_save:
-                np.save(os.path.join(save_directory, line_dict['filename']), line_dict['nparray'])
+            for filename, data in self.lines_to_save.items():
+                np.save(os.path.join(save_directory, filename), data, allow_pickle=True)
         except Exception as e:
             logger.warning(f"Unable to save line. Full detail: {e}")
