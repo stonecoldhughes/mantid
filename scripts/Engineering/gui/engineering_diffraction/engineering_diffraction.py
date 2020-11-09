@@ -36,15 +36,14 @@ class EngineeringDiffractionGui(QtWidgets.QMainWindow, Ui_main_window):
     status_savdirMaxwidth = 300
 
     def __init__(self, parent=None, window_flags=None):
-        if window_flags is not None:
-            super(EngineeringDiffractionGui, self).__init__(parent, window_flags)
+        if window_flags:
+            super().__init__(parent, window_flags)
         else:
-            super(EngineeringDiffractionGui, self).__init__(parent)
-
-        # Main Window
+            super().__init__(parent)        # Main Window
         self.setupUi(self)
         self.doc = "Engineering Diffraction"
         self.tabs = self.tab_main
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.calibration_presenter = None
         self.focus_presenter = None

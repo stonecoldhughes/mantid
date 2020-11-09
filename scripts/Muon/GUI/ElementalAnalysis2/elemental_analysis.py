@@ -21,8 +21,11 @@ class ElementalAnalysisGui(QtWidgets.QMainWindow):
     def warning_popup(message):
         message_box.warning(str(message))
 
-    def __init__(self, parent=None):
-        super(ElementalAnalysisGui, self).__init__(parent)
+    def __init__(self, parent=None, window_flags=None):
+        if window_flags:
+            super().__init__(parent, window_flags)
+        else:
+            super().__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setObjectName("ElementalAnalysis2")

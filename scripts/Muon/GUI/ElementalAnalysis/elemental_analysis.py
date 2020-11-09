@@ -67,8 +67,11 @@ class ElementalAnalysisGui(QtWidgets.QMainWindow):
     ORANGE = 'C1'
     GREEN = 'C2'
 
-    def __init__(self, parent=None):
-        super(ElementalAnalysisGui, self).__init__(parent)
+    def __init__(self, parent=None, window_flags=None):
+        if window_flags:
+            super().__init__(parent, window_flags)
+        else:
+            super().__init__(parent)
         # set menu
         self.menu = self.menuBar()
         self.menu.addAction("File")
