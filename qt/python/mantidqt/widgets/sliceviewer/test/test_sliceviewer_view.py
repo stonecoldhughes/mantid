@@ -8,6 +8,9 @@
 import unittest
 
 import matplotlib as mpl
+
+from mantidqt.widgets.colorbar.colorbar import MIN_LOG_VALUE
+
 mpl.use('Agg')  # noqa
 from mantid.simpleapi import (CreateMDHistoWorkspace, CreateMDWorkspace, CreateSampleWorkspace,
                               SetUB)
@@ -16,6 +19,7 @@ from mantidqt.utils.qt.testing.qt_widget_finder import QtWidgetFinder
 from mantidqt.widgets.sliceviewer.presenter import SliceViewer
 from mantidqt.widgets.sliceviewer.toolbar import ToolItemText
 from qtpy.QtWidgets import QApplication
+from math import inf
 
 
 @start_qapplication
@@ -45,8 +49,8 @@ class SliceViewerViewTest(unittest.TestCase, QtWidgetFinder):
         self.assert_widget_created()
         pres.view.close()
 
-        QApplication.processEvents()
-        QApplication.processEvents()
+        QApplication.sendPostedEvents()
+        QApplication.sendPostedEvents()
 
         self.assert_no_toplevel_widgets()
 
@@ -56,10 +60,10 @@ class SliceViewerViewTest(unittest.TestCase, QtWidgetFinder):
             pres,
             (ToolItemText.LINEPLOTS, ToolItemText.REGIONSELECTION, ToolItemText.NONORTHOGONAL_AXES))
         line_plots_action.trigger()
-        QApplication.processEvents()
+        QApplication.sendPostedEvents()
 
         non_ortho_action.trigger()
-        QApplication.processEvents()
+        QApplication.sendPostedEvents()
 
         self.assertTrue(non_ortho_action.isChecked())
         self.assertFalse(line_plots_action.isChecked())
@@ -75,13 +79,42 @@ class SliceViewerViewTest(unittest.TestCase, QtWidgetFinder):
             pres, (ToolItemText.LINEPLOTS, ToolItemText.REGIONSELECTION))
         line_plots_action.trigger()
         region_sel_action.trigger()
-        QApplication.processEvents()
+        QApplication.sendPostedEvents()
 
         line_plots_action.trigger()
-        QApplication.processEvents()
+        QApplication.sendPostedEvents()
 
         self.assertFalse(line_plots_action.isChecked())
         self.assertFalse(region_sel_action.isChecked())
+
+        pres.view.close()
+
+    def test_clim_edits_prevent_negative_values_if_lognorm(self):
+        pres = SliceViewer(self.histo_ws)
+        colorbar = pres.view.data_view.colorbar
+        colorbar.autoscale.setChecked(False)
+        colorbar.norm.setCurrentText("Log")
+        prev_bottom_limit = colorbar.cmin.text()
+        prev_top_limit = colorbar.cmax.text()
+
+        colorbar.cmin.textChanged.emit(str(-10))
+        colorbar.cmax.textChanged.emit(str(-5))
+
+        self.assertEqual(colorbar.cmin.text(), prev_bottom_limit)
+        self.assertEqual(colorbar.cmax.text(), prev_top_limit)
+
+        pres.view.close()
+
+    def test_changing_norm_updates_clim_validators(self):
+        pres = SliceViewer(self.histo_ws)
+        colorbar = pres.view.data_view.colorbar
+        colorbar.autoscale.setChecked(False)
+
+        colorbar.norm.setCurrentText("Log")
+        self.assertEqual(colorbar.cmin.validator().bottom(), MIN_LOG_VALUE)
+
+        colorbar.norm.setCurrentText("Linear")
+        self.assertEqual(colorbar.cmin.validator().bottom(), -inf)
 
         pres.view.close()
 

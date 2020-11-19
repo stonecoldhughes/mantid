@@ -41,10 +41,10 @@ BUNDLED_PY_MODULES_COMMON = [
   'urllib3',
   'wcwidth',
   'yaml',
-  'zmq'
+  'zmq',
   'appdirs.py',
   'config',
-  'ipywidgets'
+  'ipywidgets',
   'setuptools',
   'setuptools*.*-info',
   'wheel',
@@ -72,6 +72,7 @@ BUNDLED_PY_MODULES_WORKBENCH = [
   'PyQt5/QtPrintSupport.so',
   'PyQt5/QtSql.so',
   'PyQt5/QtSvg.so',
+  'PyQt5/QtTest.so',
   'PyQt5/QtWidgets.so',
   'PyQt5/QtXml.so',
   'PyQt5/sip.so',
