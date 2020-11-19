@@ -45,6 +45,7 @@ BUNDLED_PY_MODULES_COMMON = [
   'appdirs.py',
   'config',
   'ipywidgets',
+  'ipympl',
   'setuptools',
   'setuptools*.*-info',
   'wheel',
