@@ -5,7 +5,8 @@
 # Note 1. Using the IPythonNotebook may be possible/easier
 # Note 2. Would possibly work as a --user install rather than running --target
 # Note 3. One user had problems with /Applications/MantidWorkbench.app/Contents/Frameworks//Python.framework/Versions/3.8/lib/python3.8/distutils/distutils.cfg to remove the --prefix=/usr/local, presumably this is a problem caused by using --target
-
+export PATH=
 /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/bin/python -m pip install pip --upgrade
 /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/bin/python -m pip install setuptools --upgrade --target /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/
 /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/bin/python -m pip install jupyter --upgrade --prefix= --target /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/
+/Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/bin/python -m pip install ipympl --upgrade --prefix= --target /Applications/MantidWorkbench.app/Contents/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/
