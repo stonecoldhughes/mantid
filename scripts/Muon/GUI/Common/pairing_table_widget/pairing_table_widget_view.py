@@ -104,14 +104,13 @@ class PairingTableView(QtWidgets.QWidget):
         vertical_headers.setVisible(True)
 
         self.pairing_table.horizontalHeaderItem(0).setToolTip("The name of the pair :"
-                                                              "\n    - The name must be unique across all groups/pairs"
+                                                              "\n    - The name must be unique across all groups/pairs/differences"
                                                               "\n    - The name can only use digits, characters and _")
-        self.pairing_table.horizontalHeaderItem(1).setToolTip("Group 1 of the pair, selected from the grouping table")
-        self.pairing_table.horizontalHeaderItem(2).setToolTip("Group 2 of the pair, selected from the grouping table")
-        self.pairing_table.horizontalHeaderItem(3).setToolTip("The value of Alpha for the pair asymmetry:"
+        self.pairing_table.horizontalHeaderItem(1).setToolTip("Whether to include this pair in the analysis")
+        self.pairing_table.horizontalHeaderItem(2).setToolTip("Group 1 of the pair, selected from the grouping table")
+        self.pairing_table.horizontalHeaderItem(3).setToolTip("Group 2 of the pair, selected from the grouping table")
+        self.pairing_table.horizontalHeaderItem(4).setToolTip("The value of Alpha for the pair asymmetry:"
                                                               "\n   - The number must be >= 0.0")
-
-        self.pairing_table.horizontalHeaderItem(4).setToolTip("Whether to include this pair in the analysis")
         self.pairing_table.horizontalHeaderItem(5).setToolTip("Replace the current value of Alpha with one estimated"
                                                               " from the data.")
 

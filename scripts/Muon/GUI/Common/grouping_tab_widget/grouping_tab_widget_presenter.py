@@ -26,12 +26,14 @@ class GroupingTabPresenter(object):
 
     def __init__(self, view, model,
                  grouping_table_widget=None,
-                 pairing_table_widget=None):
+                 pairing_table_widget=None,
+                 difference_table_widget=None):
         self._view = view
         self._model = model
 
         self.grouping_table_widget = grouping_table_widget
         self.pairing_table_widget = pairing_table_widget
+        self.difference_table_widget = difference_table_widget
 
         self._view.set_description_text(self.text_for_description())
         self._view.on_add_pair_requested(self.add_pair_from_grouping_table)
@@ -169,23 +171,27 @@ class GroupingTabPresenter(object):
         self._view.set_buttons_enabled(False)
         self.grouping_table_widget.disable_editing()
         self.pairing_table_widget.disable_editing()
+        self.difference_table_widget.disable_editing()
         self.disable_editing_notifier.notify_subscribers()
 
     def enable_editing(self, result=None):
         self._view.set_buttons_enabled(True)
         self.grouping_table_widget.enable_editing()
         self.pairing_table_widget.enable_editing()
+        self.difference_table_widget.enable_editing()
         self.enable_editing_notifier.notify_subscribers()
 
     def disable_editing_without_notifying_subscribers(self):
         self._view.set_buttons_enabled(False)
         self.grouping_table_widget.disable_editing()
         self.pairing_table_widget.disable_editing()
+        self.difference_table_widget.disable_editing()
 
     def enable_editing_without_notifying_subscribers(self):
         self._view.set_buttons_enabled(True)
         self.grouping_table_widget.enable_editing()
         self.pairing_table_widget.enable_editing()
+        self.difference_table_widget.enable_editing()
 
     def calculate_all_data(self):
         self._model.show_all_groups_and_pairs()
