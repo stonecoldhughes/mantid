@@ -4,6 +4,8 @@
 #   NScD Oak Ridge National Laboratory, European Spallation Source,
 #   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 # SPDX - License - Identifier: GPL - 3.0 +
+import re
+from Muon.GUI.Common.utilities.run_string_utils import valid_name_regex
 
 class DifferenceTablePresenter(object):
 
@@ -23,6 +25,49 @@ class DifferenceTablePresenter(object):
     # Add / Remove differences
     # ------------------------------------------------------------------------------------------------------------------
 
-    def handle_add_difference_button_clicked(self):
+    def handle_add_difference_button_clicked(self, difference_1='', difference_2=''):
         if (len(self._model.pair_names) == 0 or len(self._model.pair_names) == 1) and (len(self._model.group_names) == 0 or len(self._model.group_names) == 1):
             self._view.warning_popup("At least two groups or two pairs are required to create a difference")
+        else:
+            new_difference_name = self._view.enter_difference_name()
+            if new_difference_name is None: # User did not supply name
+                return
+            elif new_difference_name in self._model.group_and_pair_and_differences_names:
+                self._view.warning_popup("Groups and pairs must have unique names")
+            elif self.validate_new_difference_name(new_difference_name):
+                pass # Add difference here
+            """
+                Want to create difference object which is just wrapper of group/pair
+                Here ideally pair1-pair1 so pair_names[0] pair_names[1]
+            """
+
+    def handle_remove_button_clicked(self):
+        difference_names = self._view.get_selected_difference_names()
+        if not difference_names:
+            self.remove_last_row_in_view_and_model()
+        else:
+            self.remove_selected_rows_in_view_and_model(difference_names)
+        # Notify data changed
+
+    def remove_last_in_view_and_model(self):
+        pass
+
+    def remove_selected_rows_in_view_and_model(self, difference_names):
+        pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Table entry validation
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def validate_new_difference_name(self, text):
+        if not re.match(valid_name_regex, text):
+            self._view.warning_popup("Difference names should only contain characters, digits and _")
+            return False
+        if self._is_edited_name_duplicated(text):
+            self._view.warning_popup("Groups and pairs must have unique names")
+
+    def _is_edited_name_duplicated(self, new_name):
+        is_name_column_being_edited = self._view.difference_table.currentColumn() == 0
+        is_name_unique = (sum(
+            [new_name == name for name in self._model.group_and_pair_names]) == 0)
+        return is_name_column_being_edited and not is_name_unique

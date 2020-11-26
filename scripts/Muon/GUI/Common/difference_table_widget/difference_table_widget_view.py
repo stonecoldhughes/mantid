@@ -151,6 +151,25 @@ class DifferenceTableView(QtWidgets.QWidget):
     # Adding / Removing differences
     # ------------------------------------------------------------------------------------------------------------------
 
+    def remove_selected_pairs(self):
+        indices = self._get_selected_row_indices()
+        for index in reversed(sorted(indices)):
+            self.difference_table.removeRow(index)
+
+    def remove_last_row(self):
+        last_row_index = self.difference_table.rowCount() - 1
+        if last_row_index >= 0:
+            self.difference_table.removeRow(last_row_index)
+
+    def get_selected_difference_names(self):
+        indexes = self._get_selected_row_indices()
+        return [str(self.difference_table.item(i,0).text()) for i in indexes]
+
+    def enter_difference_name(self):
+        new_difference_name, ok = QtWidgets.QInputDialog.getText(self, 'Difference Name', 'Enter name of new difference:')
+        if ok:
+            return new_difference_name
+
     def _get_selected_row_indices(self):
         return list(set(index.row() for index in self.difference_table.selectedIndexes()))
 
