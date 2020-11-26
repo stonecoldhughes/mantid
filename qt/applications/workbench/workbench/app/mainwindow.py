@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
             interface.setObjectName(object_name)
             interface.setAttribute(Qt.WA_DeleteOnClose, True)
             # make indirect interfaces children of workbench
-            if submenu == "Indirect":
+            if submenu in ["Indirect", "Reflectometry"]:
                 interface.setParent(self, interface.windowFlags())
             interface.show()
         else:
