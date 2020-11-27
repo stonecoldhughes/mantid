@@ -35,14 +35,15 @@ from mantidqt.utils.qt import (add_actions, create_action, widget_updates_disabl
 from mantidqt.project.project import Project  # noqa
 from mantidqt.usersubwindowfactory import UserSubWindowFactory  # noqa
 
-from workbench.config import CONF  # noqa
+from workbench.config import CONF, get_window_config  # noqa
 from workbench.plotting.globalfiguremanager import GlobalFigureManager  # noqa
 from workbench.utils.windowfinder import find_all_windows_that_are_savable  # noqa
 from workbench.utils.workspacehistorygeneration import get_all_workspace_history_from_ads  # noqa
 from workbench.projectrecovery.projectrecovery import ProjectRecovery  # noqa
-from workbench.utils.recentlyclosedscriptsmenu import RecentlyClosedScriptsMenu # noqa
+from workbench.utils.recentlyclosedscriptsmenu import RecentlyClosedScriptsMenu  # noqa
 from mantidqt.utils.asynchronous import BlockingAsyncTaskWithCallback  # noqa
 from mantidqt.utils.qt.qappthreadcall import QAppThreadCall  # noqa
+
 
 # -----------------------------------------------------------------------------
 # Splash screen
@@ -68,6 +69,7 @@ SPLASH.showMessage("Starting...", Qt.AlignBottom | Qt.AlignLeft
                    | Qt.AlignAbsolute, QColor(Qt.black))
 # The event loop has not started - force event processing
 QApplication.processEvents(QEventLoop.AllEvents)
+
 
 # -----------------------------------------------------------------------------
 # MainWindow
@@ -330,13 +332,15 @@ class MainWindow(QMainWindow):
         else show existing window"""
         object_name = 'custom-cpp-interface-' + interface_name
         window = find_window(object_name, QMainWindow)
+        parent, flags = get_window_config()
         if window is None:
             interface = self.interface_manager.createSubWindow(interface_name)
             interface.setObjectName(object_name)
             interface.setAttribute(Qt.WA_DeleteOnClose, True)
             # make indirect interfaces children of workbench
             if submenu in ["Indirect", "Reflectometry"]:
-                interface.setParent(self, interface.windowFlags())
+                interface.setParent(parent)
+                interface.setWindowFlags(interface.windowFlags() | flags)
             interface.show()
         else:
             if window.windowState() == Qt.WindowMinimized:

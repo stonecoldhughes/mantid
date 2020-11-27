@@ -9,6 +9,7 @@ from qtpy.QtWidgets import QApplication
 from Muon.GUI.Common.usage_report import report_interface_startup
 import sys
 
+
 def open_interface(Interface, name):
     widgets = QApplication.topLevelWidgets()
     application_names = [app.objectName() for app in widgets]
@@ -23,6 +24,7 @@ def open_interface(Interface, name):
             parent, flags = get_window_config()
         else:
             parent, flags = None, None
+            parent = None
         gui = Interface(parent=parent, window_flags=flags)
         report_interface_startup(name)
         gui.setObjectName(name)
