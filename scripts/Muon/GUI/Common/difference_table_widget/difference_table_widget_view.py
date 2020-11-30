@@ -26,6 +26,10 @@ class DifferenceTableView(QtWidgets.QWidget):
 
         self._validate_difference_name_entry = lambda text: True
 
+        # Active groups/pairs that can be selected from the comboboxes
+        self._group_selections = []
+        self._pair_selections = []
+
         # Right click context menu
         self.menu = None
         self._disabled = False
@@ -98,6 +102,82 @@ class DifferenceTableView(QtWidgets.QWidget):
 
     def num_cols(self):
         return self.difference_table.columnCount()
+
+    def update_group_selections(self, group_name_list):
+        self._group_selections = group_name_list
+
+    def update_pair_selections(self, pair_name_list):
+        self._pair_selections = pair_name_list
+
+    def clear(self):
+        pass
+
+    def add_entry_to_table(self, row_entries, color=(255,255,255), tooltip=''):
+        # assert len(row_entries) == self.difference_table.columnCount()-1
+        q_color = QtGui.QColor(*color, alpha=127)
+        q_brush = QtGui.QBrush(q_color)
+        is_group = False # Flag for setting combo boxes in table for group pair selection
+
+        row_position = self.difference_table.rowCount()
+        self.difference_table.insertRow(row_position)
+        for i, entry in enumerate(row_entries):
+            item = QtWidgets.QTableWidgetItem(entry)
+            item.setBackground(q_brush)
+            item.setToolTip(tooltip)
+
+            if difference_columns[i] == 'difference_name':
+                difference_name_widget = table_utils.ValidatedTableItem(self._validate_difference_name_entry)
+                difference_name_widget.setText(entry)
+                self.difference_table.setItem(row_position, i, difference_name_widget)
+                item.setFlags(QtCore.Qt.ItemIsEnabled)
+                item.setFlags(QtCore.Qt.ItemIsSelectable)
+            if difference_columns[i] == 'to_analyse':
+                if entry:
+                    item.setCheckState(QtCore.Qt.Checked)
+                else:
+                    item.setCheckState(QtCore.Qt.Unchecked)
+            if difference_columns[i] == 'group_or_pair':
+                group_or_pair_selector = QtWidgets.QComboBox(self)
+                group_or_pair_selector.setToolTip("Select whether the difference is between two groups or two pairs")
+                group_or_pair_selector.addItems(['group','pair'])
+                # ensure change in selection sends an update signal
+                group_or_pair_selector.setCurrentIndex(group_or_pair_selector.findText(entry))
+                self.difference_table.setCellWidget(row_position, i, group_or_pair_selector)
+
+                # Set flag to determine whether to use groups or pairs for combobox selection
+                if entry == 'group':
+                    is_group = True
+            if difference_columns[i] == 'group_pair_1':
+                if is_group:
+                    group_pair_1_selector = self._group_selection_cell_widget()
+                else:
+                    group_pair_1_selector = self._pair_selection_cell_widget()
+                # ensure change in selection sends an update signal
+                group_pair_1_selector.setCurrentIndex(group_pair_1_selector.findText(entry))
+                self.difference_table.setCellWidget(row_position, i, group_pair_1_selector)
+            if difference_columns[i] == 'group_pair_2':
+                if is_group:
+                    group_pair_2_selector = self._group_selection_cell_widget()
+                else:
+                    group_pair_2_selector = self._pair_selection_cell_widget()
+                # ensure change in selection sends an update signal
+                group_pair_2_selector.setCurrentIndex(group_pair_2_selector.findText(entry))
+                self.difference_table.setCellWidget(row_position, i, group_pair_2_selector)
+            self.difference_table.setItem(row_position, i, item)
+
+    def _group_selection_cell_widget(self):
+        """Combo box for group selection"""
+        selector = QtWidgets.QComboBox(self)
+        selector.setToolTip("Select a group from the grouping table")
+        selector.addItems(self._group_selections)
+        return selector
+
+    def _pair_selection_cell_widget(self):
+        """Combo box for pair selection"""
+        selector = QtWidgets.QComboBox(self)
+        selector.setToolTip("Select a pair from the pairing table")
+        selector.addItems(self._pair_selections)
+        return selector
 
     # ------------------------------------------------------------------------------------------------------------------
     # Signal / Slot connections
