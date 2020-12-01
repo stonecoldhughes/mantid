@@ -27,10 +27,11 @@ MUON_ANALYSIS_DEFAULT_X_RANGE = [0.0, 15.0]
 class MuonContext(object):
     def __init__(self, muon_data_context=None, muon_gui_context=None,
                  muon_group_context=None, base_directory='Muon Data', muon_phase_context=None,
-                 workspace_suffix=' MA', fitting_context=None, frequency_context=None):
+                 workspace_suffix=' MA', fitting_context=None, frequency_context=None, muon_difference_context=None):
         self._data_context = muon_data_context
         self._gui_context = muon_gui_context
         self._group_pair_context = muon_group_context
+        self._difference_context = muon_difference_context
         self._phase_context = muon_phase_context
         self.fitting_context = fitting_context
         self.base_directory = base_directory
@@ -62,6 +63,10 @@ class MuonContext(object):
     @property
     def group_pair_context(self):
         return self._group_pair_context
+
+    @property
+    def difference_context(self):
+        return self._difference_context
 
     @property
     def phase_context(self):

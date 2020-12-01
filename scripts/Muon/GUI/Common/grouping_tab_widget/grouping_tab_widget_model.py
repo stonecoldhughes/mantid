@@ -7,6 +7,7 @@
 from Muon.GUI.Common.contexts.muon_data_context import construct_empty_group, construct_empty_pair
 from Muon.GUI.Common.muon_group import MuonGroup
 from Muon.GUI.Common.muon_pair import MuonPair
+from Muon.GUI.Common.muon_difference import MuonDifference
 from Muon.GUI.Common.muon_group import MuonRun
 from enum import Enum
 
@@ -29,6 +30,7 @@ class GroupingTabModel(object):
         self._context = context
         self._data = context.data_context
         self._groups_and_pairs = context.group_pair_context
+        self._differences = context.difference_context
         self._gui_variables = context.gui_context
 
     def get_group_workspace(self, group_name, run):
@@ -50,6 +52,10 @@ class GroupingTabModel(object):
     @property
     def pairs(self):
         return self._groups_and_pairs.pairs
+
+    @property
+    def differences(self):
+        return self._differences.differences
 
     @property
     def group_names(self):
@@ -81,6 +87,9 @@ class GroupingTabModel(object):
     def clear_pairs(self):
         self._groups_and_pairs.clear_pairs()
 
+    def clear_differences(self):
+        self._differences.clear()
+
     def clear_selected_pairs(self):
         self._groups_and_pairs.clear_selected_pairs()
 
@@ -90,6 +99,7 @@ class GroupingTabModel(object):
     def clear(self):
         self.clear_groups()
         self.clear_pairs()
+        self.clear_differences()
         self.clear_selected_groups()
         self.clear_selected_pairs()
 
@@ -115,6 +125,10 @@ class GroupingTabModel(object):
     def add_pair(self, pair):
         assert isinstance(pair, MuonPair)
         self._groups_and_pairs.add_pair(pair)
+
+    def add_difference(self, difference):
+        assert isinstance(difference, MuonDifference)
+        self._differences.add_difference(difference)
 
     def remove_groups_by_name(self, name_list):
         for name in name_list:

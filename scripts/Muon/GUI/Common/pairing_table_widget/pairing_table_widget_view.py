@@ -139,6 +139,8 @@ class PairingTableView(QtWidgets.QWidget):
             self.dataChanged.emit()
 
     def add_entry_to_table(self, row_entries, color=(255, 255, 255), tooltip=''):
+        print(len(row_entries))
+        print(self.pairing_table.columnCount() - 1)
         assert len(row_entries) == self.pairing_table.columnCount() - 1
         q_color = QtGui.QColor(*color, alpha=127)
         q_brush = QtGui.QBrush(q_color)

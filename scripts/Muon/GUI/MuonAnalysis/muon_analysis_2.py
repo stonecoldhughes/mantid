@@ -14,6 +14,7 @@ import Muon.GUI.Common.message_box as message_box
 from Muon.GUI.Common.contexts.data_analysis_context import DataAnalysisContext
 from Muon.GUI.Common.contexts.muon_data_context import MuonDataContext
 from Muon.GUI.Common.contexts.muon_group_pair_context import MuonGroupPairContext
+from Muon.GUI.Common.contexts.muon_difference_context import MuonDifferenceContext
 from Muon.GUI.Common.contexts.phase_table_context import PhaseTableContext
 from Muon.GUI.Common.contexts.fitting_context import FittingContext
 from Muon.GUI.Common.contexts.muon_gui_context import MuonGuiContext, PlotMode
@@ -76,6 +77,7 @@ class MuonAnalysisGui(QtWidgets.QMainWindow):
         self.gui_context = MuonGuiContext()
         self.group_pair_context = MuonGroupPairContext(
             self.data_context.check_group_contains_valid_detectors)
+        self.difference_context = MuonDifferenceContext()
         self.phase_context = PhaseTableContext()
         self.fitting_context = FittingContext()
 
@@ -83,7 +85,8 @@ class MuonAnalysisGui(QtWidgets.QMainWindow):
                                            muon_gui_context=self.gui_context,
                                            muon_group_context=self.group_pair_context,
                                            fitting_context=self.fitting_context,
-                                           muon_phase_context=self.phase_context)
+                                           muon_phase_context=self.phase_context,
+                                           muon_difference_context=self.difference_context)
 
         # create the Dockable plot widget
         self.fitting_tab = FittingTabWidget(self.context, self)

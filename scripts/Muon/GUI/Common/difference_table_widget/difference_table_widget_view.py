@@ -11,6 +11,7 @@ from Muon.GUI.Common import message_box
 from Muon.GUI.Common.utilities import table_utils
 
 difference_columns = {0: 'difference_name', 1: 'to_analyse', 2: 'group_or_pair', 3: 'group_pair_1', 4: 'group_pair_2'}
+inverted_difference_columns = {'difference_name': 0, 'to_analyse': 1, 'group_or_pair': 2, 'group_pair_1': 3, 'group_pair_2': 4}
 
 class DifferenceTableView(QtWidgets.QWidget):
 
@@ -23,12 +24,17 @@ class DifferenceTableView(QtWidgets.QWidget):
         self.difference_table = QtWidgets.QTableWidget(self)
         self.set_up_table()
         self.set_up_layout()
+        self.difference_table.cellChanged.connect(self.on_cell_changed)
 
         self._validate_difference_name_entry = lambda text: True
+        self._on_table_data_changed = lambda: 0
 
         # Active groups/pairs that can be selected from the comboboxes
         self._group_selections = []
         self._pair_selections = []
+
+        # Whether the difference table is updating, should not respond to signals if true
+        self._updating = False
 
         # Right click context menu
         self.menu = None
@@ -110,10 +116,10 @@ class DifferenceTableView(QtWidgets.QWidget):
         self._pair_selections = pair_name_list
 
     def clear(self):
-        pass
+        for
 
     def add_entry_to_table(self, row_entries, color=(255,255,255), tooltip=''):
-        # assert len(row_entries) == self.difference_table.columnCount()-1
+        assert len(row_entries) == self.difference_table.columnCount()
         q_color = QtGui.QColor(*color, alpha=127)
         q_brush = QtGui.QBrush(q_color)
         is_group = False # Flag for setting combo boxes in table for group pair selection
@@ -141,6 +147,7 @@ class DifferenceTableView(QtWidgets.QWidget):
                 group_or_pair_selector.setToolTip("Select whether the difference is between two groups or two pairs")
                 group_or_pair_selector.addItems(['group','pair'])
                 # ensure change in selection sends an update signal
+                group_or_pair_selector.currentIndexChanged.connect(lambda: self.on_cell_changed(row_position,2))
                 group_or_pair_selector.setCurrentIndex(group_or_pair_selector.findText(entry))
                 self.difference_table.setCellWidget(row_position, i, group_or_pair_selector)
 
@@ -153,6 +160,7 @@ class DifferenceTableView(QtWidgets.QWidget):
                 else:
                     group_pair_1_selector = self._pair_selection_cell_widget()
                 # ensure change in selection sends an update signal
+                group_pair_1_selector.currentIndexChanged.connect(lambda: self.on_cell_changed(row_position,3))
                 group_pair_1_selector.setCurrentIndex(group_pair_1_selector.findText(entry))
                 self.difference_table.setCellWidget(row_position, i, group_pair_1_selector)
             if difference_columns[i] == 'group_pair_2':
@@ -161,9 +169,30 @@ class DifferenceTableView(QtWidgets.QWidget):
                 else:
                     group_pair_2_selector = self._pair_selection_cell_widget()
                 # ensure change in selection sends an update signal
+                group_pair_2_selector.currentIndexChanged.connect(lambda: self.on_cell_changed(row_position,4))
                 group_pair_2_selector.setCurrentIndex(group_pair_2_selector.findText(entry))
                 self.difference_table.setCellWidget(row_position, i, group_pair_2_selector)
             self.difference_table.setItem(row_position, i, item)
+
+    def get_table_contents(self):
+        if self._updating:
+            return []
+        ret = [[None for _ in range(self.num_cols())] for _ in range(self.num_rows())]
+        for row in range(self.num_rows()):
+            for col in range(self.num_cols()):
+                # Handle widgets separately
+                if difference_columns[col] == "group_or_pair" or difference_columns[col] == "group_pair_1" or difference_columns[col] == "group_pair_1":
+                    ret[row][col] = str(self.difference_table.cellWidget(row, col).currentText())
+                else: # non-widget cell
+                    ret[row][col] = str(self.difference_table.item(row,col).text())
+        return ret
+
+    def get_table_item_text(self, row, col):
+        # If widget handle separately
+        if difference_columns[col] == "group_or_pair" or difference_columns[col] == "group_pair_1" or difference_columns[col] == "group_pair_1":
+            return str(self.difference_table.cellWidget(row, col).currentText())
+        else: # non-widget cell
+            return str(self.difference_table.item(row, col).text())
 
     def _group_selection_cell_widget(self):
         """Combo box for group selection"""
@@ -188,6 +217,13 @@ class DifferenceTableView(QtWidgets.QWidget):
 
     def on_remove_difference_button_clicked(self, slot):
         self.remove_difference_button.clicked.connect(slot)
+
+    def on_cell_changed(self, _row, _col):
+        if not self._updating:
+            self._on_table_data_changed(_row, _col)
+
+    def on_table_data_changed(self, slot):
+        self._on_table_data_changed = slot
 
     # ------------------------------------------------------------------------------------------------------------------
     # Context Menu
@@ -231,7 +267,7 @@ class DifferenceTableView(QtWidgets.QWidget):
     # Adding / Removing differences
     # ------------------------------------------------------------------------------------------------------------------
 
-    def remove_selected_pairs(self):
+    def remove_selected_differences(self):
         indices = self._get_selected_row_indices()
         for index in reversed(sorted(indices)):
             self.difference_table.removeRow(index)
@@ -259,7 +295,7 @@ class DifferenceTableView(QtWidgets.QWidget):
 
     def enable_updates(self):
         """Allow update signals to be sent"""
-        self._udpating = False
+        self._updating = False
 
     def disable_updates(self):
         """Prevent udpate signals being sent"""
