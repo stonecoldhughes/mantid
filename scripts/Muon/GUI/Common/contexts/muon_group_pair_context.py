@@ -9,6 +9,7 @@ import os
 import Muon.GUI.Common.utilities.xml_utils as xml_utils
 from Muon.GUI.Common.muon_group import MuonGroup
 from Muon.GUI.Common.muon_pair import MuonPair
+from Muon.GUI.Common.muon_base_difference import MuonBaseDifference
 
 from mantid.api import WorkspaceGroup
 from mantid.kernel import ConfigServiceImpl
@@ -110,6 +111,7 @@ class MuonGroupPairContext(object):
     def __init__(self, check_group_contains_valid_detectors=lambda x: True):
         self._groups = []
         self._pairs = []
+        self._differences = []
         self._selected = ''
         self._selected_type = ''
         self._selected_pairs = []
@@ -134,6 +136,10 @@ class MuonGroupPairContext(object):
         return self._pairs
 
     @property
+    def differences(self):
+        return self._differences
+
+    @property
     def selected_pairs(self):
         return self._selected_pairs
 
@@ -150,6 +156,9 @@ class MuonGroupPairContext(object):
 
     def clear_pairs(self):
         self._pairs = []
+
+    def clear_differences(self):
+        self._differences = []
 
     def clear_selected_pairs(self):
         self._selected_pairs = []
@@ -211,6 +220,16 @@ class MuonGroupPairContext(object):
             self._pairs.append(pair)
         else:
             raise ValueError('Groups and pairs must have unique names')
+
+    def add_difference(self, difference):
+        if isinstance(difference, MuonBaseDifference):
+            self._differences.append(difference)
+
+    def remove_difference(self, difference_to_remove):
+        for difference in self._differences:
+            if difference_to_remove.name == difference.name:
+                self._differences.remove(difference_to_remove)
+                return
 
     def reset_group_and_pairs_to_default(self, workspace, instrument, main_field_direction, num_periods):
         default_groups, default_pairs, default_selected = get_default_grouping(workspace, instrument, main_field_direction)

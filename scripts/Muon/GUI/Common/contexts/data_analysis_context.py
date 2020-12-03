@@ -10,10 +10,9 @@ from Muon.GUI.Common.utilities.run_string_utils import run_list_to_string
 
 class DataAnalysisContext(MuonContext):
     def __init__(self, muon_data_context=None, muon_gui_context=None,
-                 muon_group_context=None, fitting_context=None, muon_phase_context=None, muon_difference_context=None):
+                 muon_group_context=None, fitting_context=None, muon_phase_context=None):
         super().__init__(muon_data_context=muon_data_context, muon_gui_context=muon_gui_context,
-                         muon_group_context=muon_group_context, fitting_context=fitting_context, muon_phase_context=muon_phase_context,
-                         muon_difference_context=muon_difference_context)
+                         muon_group_context=muon_group_context, fitting_context=fitting_context, muon_phase_context=muon_phase_context)
         self.workspace_suffix = ' MA'
         self.base_directory = 'Muon Data'
 

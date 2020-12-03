@@ -104,7 +104,7 @@ class PairingTableView(QtWidgets.QWidget):
         vertical_headers.setVisible(True)
 
         self.pairing_table.horizontalHeaderItem(0).setToolTip("The name of the pair :"
-                                                              "\n    - The name must be unique across all groups/pairs/differences"
+                                                              "\n    - The name must be unique across all groups/pairs"
                                                               "\n    - The name can only use digits, characters and _")
         self.pairing_table.horizontalHeaderItem(1).setToolTip("Whether to include this pair in the analysis")
         self.pairing_table.horizontalHeaderItem(2).setToolTip("Group 1 of the pair, selected from the grouping table")
@@ -139,8 +139,6 @@ class PairingTableView(QtWidgets.QWidget):
             self.dataChanged.emit()
 
     def add_entry_to_table(self, row_entries, color=(255, 255, 255), tooltip=''):
-        print(len(row_entries))
-        print(self.pairing_table.columnCount() - 1)
         assert len(row_entries) == self.pairing_table.columnCount() - 1
         q_color = QtGui.QColor(*color, alpha=127)
         q_brush = QtGui.QBrush(q_color)

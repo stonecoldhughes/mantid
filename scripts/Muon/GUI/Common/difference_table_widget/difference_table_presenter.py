@@ -5,7 +5,8 @@
 #   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 # SPDX - License - Identifier: GPL - 3.0 +
 import re
-from Muon.GUI.Common.muon_difference import MuonDifference
+from Muon.GUI.Common.muon_group_difference import MuonGroupDifference
+from Muon.GUI.Common.muon_pair_difference import MuonPairDifference
 from Muon.GUI.Common.utilities.run_string_utils import valid_name_regex
 from Muon.GUI.Common.grouping_tab_widget.grouping_tab_widget_model import RowValid
 from Muon.GUI.Common.grouping_table_widget.grouping_table_widget_presenter import row_colors, row_tooltips
@@ -31,39 +32,75 @@ class DifferenceTablePresenter(object):
     def handle_data_change(self, row, col):
         """Handle any data changed in the difference table"""
         table = self._view.get_table_contents()
-        changed_item_text = self._view.get_table_item_text(row, col)
 
+        # Instead of group/pair name need to swap for actual objects
+        table[row][3] = self._get_group_pair_object_from_name(table[row][3])
+        table[row][4] = self._get_group_pair_object_from_name(table[row][4])
+
+        if table[row][3] is None or table[row][4] is None:
+            raise ValueError('Cannot find group or pair')
+
+        changed_item_text = self._view.get_table_item_text(row, col)
+        if difference_columns[col] == 'to_analyse':
+            pass
         if difference_columns[col] == 'group_or_pair':
             if changed_item_text == 'group':
                 if len(self._model.group_names) < 2:
+                    self._view.set_group_or_pair(row, str('pair'))
                     self._view.warning_popup("Cannot create a difference of groups as there are less than two groups")
-                    table[row][col] = str('pair')
                     return
+                # handle changing difference to a group
+                # delete group diff with name
+                # create new instance
+                # add new instance
+                # Change combo boxes to be groups instead of pairs
+                self._view.set_group_pair_combo_boxes(row, 'groups') # Does not work
             else:
                 if len(self._model.pair_names) < 2:
+                    self._view.set_group_or_pair(row, str('group'))
                     self._view.warning_popup("Cannot create a difference of pairs as there are less than two pairs")
-                    table[row][col] = str('group')
                     return
+                # handle changing difference to a group
+                # delete group diff with name
+                # create new instance
+                # add new instance
+                # Change combo boxes to be pairs instead of groups
+                self._view.set_group_pair_combo_boxes(row, 'pairs') # Does not work
         if difference_columns[col] == 'group_pair_1':
             if changed_item_text == self._view.get_table_item_text(row, difference_columns.index('group_pair_2')):
-                table[row][difference_columns.index('group_pair_2')] = self._model.differences[row].group_pair_1
+                if isinstance(self._model.differences[row], MuonGroupDifference):
+                    table[row][difference_columns.index('group_pair_2')] = self._model.differences[row].group_1
+                elif isinstance(self._model.differences[row], MuonPairDifference):
+                    table[row][difference_columns.index('group_pair_2')] = self._model.differences[row].pair_1
+                else:
+                    raise ValueError('Cannot swap group or pair')
         if difference_columns[col] == 'group_pair_2':
             if changed_item_text == self._view.get_table_item_text(row, difference_columns.index('group_pair_1')):
-                table[row][difference_columns.index('group_pair_1')] = self._model.differences[row].group_pair_2
+                if isinstance(self._model.differences[row], MuonGroupDifference):
+                    table[row][difference_columns.index('group_pair_1')] = self._model.differences[row].group_2
+                elif isinstance(self._model.differences[row], MuonPairDifference):
+                    table[row][difference_columns.index('group_pair_1')] = self._model.differences[row].pair_2
+                else:
+                    raise ValueError('Cannot swap group or pair')
 
         self.update_model_from_view(table)
         self.update_view_from_model()
 
     def update_model_from_view(self, table=None):
-        # Get table if not provided
         if not table:
             table = self._view.get_table_contents()
         self._model.clear_differences()
         for entry in table:
-            difference = MuonDifference(difference_name=entry[0],
-                                        group_or_pair=entry[2],
-                                        group_pair_name_1=entry[3],
-                                        group_pair_name_2=entry[4])
+            if entry[2] == 'group':
+                difference = MuonGroupDifference(difference_name=entry[0],
+                                                 group_1=entry[3],
+                                                 group_2=entry[4])
+            elif entry[2] == 'pair':
+                difference = MuonPairDifference(difference_name=entry[0],
+                                                 pair_1=entry[3],
+                                                 pair_2=entry[4])
+            else:
+                raise ValueError('Cannot add difference')
             self._model.add_difference(difference)
 
     def update_view_from_model(self):
@@ -83,6 +120,15 @@ class DifferenceTablePresenter(object):
         pairs = self._model.pair_names
         self._view.update_pair_selections(pairs)
 
+    def _get_group_pair_object_from_name(self, name):
+        for group in self._model.groups:
+            if name == group.name:
+                return group
+        for pair in self._model.pairs:
+            if name == pair.name:
+                return pair
+        return None
+
     # ------------------------------------------------------------------------------------------------------------------
     # Add / Remove differences
     # ------------------------------------------------------------------------------------------------------------------
@@ -97,20 +143,21 @@ class DifferenceTablePresenter(object):
             elif new_difference_name in self._model.group_and_pair_names:
                 self._view.warning_popup("Groups and pairs must have unique names")
             elif self.validate_difference_name(new_difference_name):
+                is_group = True
                 if len(self._model.group_names) >= 2:
                     # Difference of groups
-                    group_or_pair = 'group'
-                    group_pair_1 = self._model.group_names[0]
-                    group_pair_2 = self._model.group_names[1]
+                    group_pair_1 = self._model.groups[0]
+                    group_pair_2 = self._model.groups[1]
                 else:
                     # Difference of pairs
-                    group_or_pair = 'pair'
-                    group_pair_1 = self._model.pair_names[0]
-                    group_pair_2 = self._model.pair_names[1]
-                difference = MuonDifference(difference_name=str(new_difference_name),
-                                            group_or_pair=group_or_pair,
-                                            group_pair_name_1=group_pair_1,
-                                            group_pair_name_2=group_pair_2)
+                    group_pair_1 = self._model.pairs[0]
+                    group_pair_2 = self._model.pairs[1]
+
+                # if view is group or pair create right difference
+                if is_group:
+                    difference = MuonGroupDifference(new_difference_name,group_pair_1,group_pair_2)
+                else:
+                    difference = MuonPairDifference(new_difference_name,group_pair_1,group_pair_2)
                 self.add_difference(difference)
                 # notify data changed?
 
@@ -124,15 +171,21 @@ class DifferenceTablePresenter(object):
     def add_difference_to_model(self, difference):
         self._model.add_difference(difference)
 
-    # One more arg is difference, which is instance difference
     def add_difference_to_view(self, difference,to_analyse=False,color=row_colors[RowValid.valid_for_all_runs],
                                tool_tip=row_tooltips[RowValid.valid_for_all_runs]):
         self._view.disable_updates()
         self.update_group_selections()
         self.update_pair_selections()
         # assert is instance
-        entry = [str(difference.name), to_analyse, str(difference.group_or_pair),
-                 str(difference.group_pair_1), str(difference.group_pair_2)]
+        if isinstance(difference, MuonGroupDifference):
+            entry = [str(difference.name), to_analyse, str('group'),
+                     str(difference.group_1.name), str(difference.group_2.name)]
+        elif isinstance(difference,MuonPairDifference):
+            entry = [str(difference.name), to_analyse, str('pair'),
+                     str(difference.pair_1.name), str(difference.pair_2.name)]
+        else:
+            raise ValueError('Cannot add difference')
+
         self._view.add_entry_to_table(entry, color, tool_tip)
         self._view.enable_updates()
 
