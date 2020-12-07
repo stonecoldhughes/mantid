@@ -13,7 +13,7 @@ class MuonGroupDifference(MuonBaseDifference):
     Blah blah blah
     """
 
-    def __init__(self, difference_name, group_1, group_2):
+    def __init__(self, difference_name, group_1="", group_2=""):
 
         super().__init__(difference_name)
         self._group_1 = group_1
@@ -32,7 +32,7 @@ class MuonGroupDifference(MuonBaseDifference):
         return self._group_2
 
     @group_2.setter
-    def pair_2(self, group):
+    def group_2(self, group):
         self._group_2 = group
 
     # update workspaces just call update workspace for group 1 and 2

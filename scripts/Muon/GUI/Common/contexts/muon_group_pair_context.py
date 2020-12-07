@@ -116,6 +116,7 @@ class MuonGroupPairContext(object):
         self._selected_type = ''
         self._selected_pairs = []
         self._selected_groups = []
+        self._selected_differences = []
 
         self.message_notifier = MessageNotifier(self)
 
@@ -147,6 +148,10 @@ class MuonGroupPairContext(object):
     def selected_groups(self):
         return self._selected_groups
 
+    @property
+    def selected_differences(self):
+        return self._selected_differences
+
     def clear(self):
         self.clear_groups()
         self.clear_pairs()
@@ -165,6 +170,9 @@ class MuonGroupPairContext(object):
 
     def clear_selected_groups(self):
         self._selected_groups = []
+
+    def clear_selected_differences(self):
+        self._selected_differences = []
 
     @property
     def selected(self):
@@ -191,6 +199,10 @@ class MuonGroupPairContext(object):
     @property
     def pair_names(self):
         return [pair.name for pair in self._pairs]
+
+    @property
+    def difference_names(self):
+        return [difference.name for difference in self._differences]
 
     def add_group(self, group):
         assert isinstance(group, MuonGroup)
@@ -222,12 +234,15 @@ class MuonGroupPairContext(object):
             raise ValueError('Groups and pairs must have unique names')
 
     def add_difference(self, difference):
-        if isinstance(difference, MuonBaseDifference):
+        assert isinstance(difference, MuonBaseDifference)
+        if self._check_name_unique(difference.name):
             self._differences.append(difference)
+        else:
+            raise ValueError('Groups and pairs must have unique names')
 
     def remove_difference(self, difference_to_remove):
         for difference in self._differences:
-            if difference_to_remove.name == difference.name:
+            if difference_to_remove == difference.name:
                 self._differences.remove(difference_to_remove)
                 return
 
@@ -253,7 +268,7 @@ class MuonGroupPairContext(object):
             self._selected = self.pair_names[0]
 
     def _check_name_unique(self, name):
-        for item in self._groups + self.pairs:
+        for item in self._groups + self.pairs + self._differences:
             if item.name == name:
                 return False
         return True
@@ -319,6 +334,14 @@ class MuonGroupPairContext(object):
     def remove_pair_from_selected_pairs(self, pair):
         if pair in self.pair_names and pair in self.selected_pairs:
             self._selected_pairs.remove(str(pair))
+
+    def add_difference_to_selected_differences(self, difference):
+        if difference in self.difference_names and difference not in self.selected_differences:
+            self._selected_differences.append(str(difference))
+
+    def remove_difference_from_selected_differences(self, difference):
+        if difference in self.difference_names and difference in self.selected_differences:
+            self._selected_differences.remove(str(difference))
 
     def remove_workspace_by_name(self, workspace_name):
         for item in self.groups + self.pairs:

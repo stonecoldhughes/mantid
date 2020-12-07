@@ -206,6 +206,16 @@ class MuonContext(object):
                 self.group_pair_context[group.name].update_workspaces(run, group_workspace, group_asymmetry,
                                                                       group_asymmetry_unormalised, rebin=rebin)
 
+    def calculate_differences(self):
+        self._calculate_differences()
+
+    def calculate_difference(self):
+        pass
+
+    def _calculate_differences(self):
+        for run in self._data_context.current_runs:
+            pass
+
     def update_current_data(self):
         # Update the current data; resetting the groups and pairs to their
         # default values

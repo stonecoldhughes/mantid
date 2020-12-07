@@ -49,7 +49,7 @@ class DifferenceTableView(QtWidgets.QWidget):
         header = self.difference_table.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
         vertical_headers = self.difference_table.verticalHeader()
@@ -140,8 +140,7 @@ class DifferenceTableView(QtWidgets.QWidget):
                 difference_name_widget = table_utils.ValidatedTableItem(self._validate_difference_name_entry)
                 difference_name_widget.setText(entry)
                 self.difference_table.setItem(row_position, i, difference_name_widget)
-                item.setFlags(QtCore.Qt.ItemIsEnabled)
-                item.setFlags(QtCore.Qt.ItemIsSelectable)
+                item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if difference_columns[i] == 'to_analyse':
                 if entry:
                     item.setCheckState(QtCore.Qt.Checked)
@@ -192,6 +191,9 @@ class DifferenceTableView(QtWidgets.QWidget):
                     ret[row][col] = str(self.difference_table.item(row,col).text())
         return ret
 
+    def get_table_item(self, row, col):
+        return self.difference_table.item(row, col)
+
     def get_table_item_text(self, row, col):
         # If widget handle separately
         if difference_columns[col] == "group_or_pair" or difference_columns[col] == "group_pair_1" or difference_columns[col] == "group_pair_2":
@@ -203,14 +205,21 @@ class DifferenceTableView(QtWidgets.QWidget):
         self.difference_table.cellWidget(row, inverted_difference_columns['group_or_pair']).setCurrentIndex(
             self.difference_table.cellWidget(row, inverted_difference_columns['group_or_pair']).findText(text))
 
-    def set_group_pair_combo_boxes(self, row, type):
-        group_pair_selector = None
+    def set_group_pair_selection_combo_boxes(self, row, type):
+        col_1 = inverted_difference_columns['group_pair_1']
+        col_2 = inverted_difference_columns['group_pair_2']
+        self.difference_table.cellWidget(row, col_1).blockSignals(True)
+        self.difference_table.cellWidget(row, col_2).blockSignals(True)
+        self.difference_table.cellWidget(row, col_1).clear()
+        self.difference_table.cellWidget(row, col_2).clear()
         if type == 'groups':
-            group_pair_selector = self._group_selection_cell_widget()
-        elif type == 'pairs':
-            group_pair_selector = self._pair_selection_cell_widget()
-        self.difference_table.setCellWidget(row, inverted_difference_columns['group_pair_1'], group_pair_selector)
-        self.difference_table.setCellWidget(row, inverted_difference_columns['group_pair_2'], group_pair_selector)
+            self.difference_table.cellWidget(row, col_1).addItems(self._group_selections)
+            self.difference_table.cellWidget(row, col_2).addItems(self._group_selections)
+        else:
+            self.difference_table.cellWidget(row, col_1).addItems(self._pair_selections)
+            self.difference_table.cellWidget(row, col_2).addItems(self._pair_selections)
+        self.difference_table.cellWidget(row, col_1).blockSignals(False)
+        self.difference_table.cellWidget(row, col_2).blockSignals(False)
 
     def _group_selection_cell_widget(self):
         """Combo box for group selection"""

@@ -50,6 +50,7 @@ class GroupingTabPresenter(object):
         self.groupingNotifier = GroupingTabPresenter.GroupingNotifier(self)
         self.grouping_table_widget.on_data_changed(self.group_table_changed)
         self.pairing_table_widget.on_data_changed(self.pair_table_changed)
+        self.difference_table_widget.on_data_changed(self.difference_table_changed)
         self.enable_editing_notifier = GroupingTabPresenter.EnableEditingNotifier(self)
         self.disable_editing_notifier = GroupingTabPresenter.DisableEditingNotifier(self)
         self.calculation_finished_notifier = GenericObservable()
@@ -269,6 +270,9 @@ class GroupingTabPresenter(object):
 
     def pair_table_changed(self):
         self.grouping_table_widget.update_view_from_model()
+        self.handle_update_all_clicked()
+
+    def difference_table_changed(self):
         self.handle_update_all_clicked()
 
     class LoadObserver(Observer):
