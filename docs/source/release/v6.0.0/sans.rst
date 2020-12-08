@@ -43,4 +43,11 @@ Bugfixes
 - A bug has been fixed in the ISIS SANS GUI sum runs tab, where clicking browse and then cancelling the file picker
   dialog caused a crash.
 
+Changes
+#######
+
+- Workspace names for ISIS SANS reductions no longer append the wavelength to the name. The prepended
+  wavelength is still present. For example `12345_rear_1d_1.0_10.0_...p0_t4_1.0_10.0` will now be called
+  `12345_rear_1d_1.0_10.0_...p0_t4`, where `1.0_10.0` is the wavelength of that workspace.
+
 :ref:`Release 6.0.0 <v6.0.0>`
