@@ -8,8 +8,7 @@ from Muon.GUI.Common.contexts.muon_data_context import construct_empty_group, co
 from Muon.GUI.Common.muon_group import MuonGroup
 from Muon.GUI.Common.muon_pair import MuonPair
 from Muon.GUI.Common.muon_group_difference import MuonGroupDifference
-from Muon.GUI.Common.muon_base_difference import MuonBaseDifference
-from Muon.GUI.Common.muon_group import MuonRun
+from Muon.GUI.Common.muon_base_group import MuonRun
 from enum import Enum
 
 
@@ -67,10 +66,12 @@ class GroupingTabModel(object):
 
     @property
     def group_and_pair_names(self):
-        return self._groups_and_pairs.group_names + self._groups_and_pairs.pair_names + self._groups_and_pairs.difference_names
+        return self._groups_and_pairs.group_names + self._groups_and_pairs.pair_names
+        # + difference names?
 
     @property
     def selected_groups(self):
+        #return [group for group in self._groups_and_pairs.selected_groups if isinstance(group, MuonGroup)]
         return self._groups_and_pairs.selected_groups
 
     @property
@@ -79,12 +80,11 @@ class GroupingTabModel(object):
 
     @property
     def selected_differences(self):
-        return self._groups_and_pairs.selected_differences
+        return [group for group in self._groups_and_pairs.selected_groups if isinstance(group, MuonGroupDifference)]
 
     def show_all_groups_and_pairs(self):
         self._context.show_all_groups()
         self._context.show_all_pairs()
-        self._context.show_all_differences()
 
     def clear_groups(self):
         self._groups_and_pairs.clear_groups()
@@ -101,16 +101,11 @@ class GroupingTabModel(object):
     def clear_selected_groups(self):
         self._groups_and_pairs.clear_selected_groups()
 
-    def clear_selected_differences(self):
-        self._groups_and_pairs.clear_selected_differences()
-
     def clear(self):
         self.clear_groups()
         self.clear_pairs()
-        self.clear_differences()
         self.clear_selected_groups()
         self.clear_selected_pairs()
-        self.clear_selected_differences()
 
     def select_all_groups_to_analyse(self):
         self._groups_and_pairs.set_selected_groups_to_all()
@@ -127,23 +122,13 @@ class GroupingTabModel(object):
     def add_pair_to_analysis(self, pair):
         self._groups_and_pairs.add_pair_to_selected_pairs(pair)
 
-    def remove_difference_from_analysis(self, difference):
-        self._groups_and_pairs.remove_difference_from_selected_differences(difference)
-
-    def add_difference_to_analysis(self, difference):
-        self._groups_and_pairs.add_difference_to_selected_differences(difference)
-
     def add_group(self, group):
-        assert isinstance(group, MuonGroup)
+        #assert isinstance(group, MuonGroup) # Maybe change to if else?
         self._groups_and_pairs.add_group(group)
 
     def add_pair(self, pair):
         assert isinstance(pair, MuonPair)
         self._groups_and_pairs.add_pair(pair)
-
-    def add_difference(self, difference):
-        assert isinstance(difference, MuonBaseDifference)
-        self._groups_and_pairs.add_difference(difference)
 
     def remove_groups_by_name(self, name_list):
         for name in name_list:
@@ -158,10 +143,6 @@ class GroupingTabModel(object):
     def remove_pairs_by_name(self, name_list):
         for name in name_list:
             self._groups_and_pairs.remove_pair(name)
-
-    def remove_differences_by_name(self, name_list):
-        for name in name_list:
-            self._groups_and_pairs.remove_difference(name)
 
     def construct_empty_group(self, _group_index):
         return construct_empty_group(self.group_names, _group_index)

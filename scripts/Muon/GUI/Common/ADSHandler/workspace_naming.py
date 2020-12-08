@@ -9,6 +9,8 @@ import re
 group_str = "; Group; "
 pair_str = "; Pair Asym; "
 phaseQuad_str = '; PhaseQuad'
+group_diff_str = "; GroupDifference; "
+pair_diff_str = "; PairDifference; "
 TF_ASYMMETRY_PREFIX = "TFAsymmetry"
 REBIN_STR = 'Rebin'
 FFT_STR = 'FFT'
@@ -41,8 +43,28 @@ def get_group_data_workspace_name(context, group_name, run, period_string, rebin
     return name
 
 
+def get_group_difference_data_workspace_name(context, difference_name, run, rebin):
+    name = context.data_context._base_run_name(run) + group_diff_str + difference_name + "; Counts;"
+
+    if rebin:
+        name += "".join([' ', REBIN_STR, ';'])
+
+    name += context.workspace_suffix
+    return name
+
+
 def get_group_asymmetry_name(context, group_name, run, period_string, rebin):
     name = context.data_context._base_run_name(run) + group_str + group_name + "; Asymmetry;"
+
+    if rebin:
+        name += "".join([' ', REBIN_STR, ';'])
+
+    name += context.workspace_suffix
+    return name
+
+
+def get_group_difference_asymmetry_name(context, group_name, run, rebin):
+    name = context.data_context._base_run_name(run) + group_diff_str + group_name + "; Asymmetry;"
 
     if rebin:
         name += "".join([' ', REBIN_STR, ';'])
@@ -72,11 +94,20 @@ def get_group_or_pair_from_name(name):
         end = name.find(";", index)
         pair_found = name[index: end]
         return pair_found.replace(" ", "")
+    elif group_diff_str in name:
+        index = name.find(group_diff_str) + len(group_diff_str)
+        end = name.find(";", index)
+        group_found = name[index: end]
+        return group_found.replace(" ", "")
     return ""
 
 
 def get_group_asymmetry_unnorm_name(context, group_name, run, periods, rebin):
     return '__' + get_group_asymmetry_name(context, group_name, run, periods, rebin) + '_unnorm'
+
+
+def get_group_difference_asymmetry_unnorm_name(context, group_name, run, rebin):
+    return '__' + get_group_difference_asymmetry_name(context, group_name, run, rebin) + '_unnorm'
 
 
 def get_base_data_directory(context, run):

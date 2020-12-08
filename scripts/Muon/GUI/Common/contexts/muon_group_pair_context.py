@@ -9,7 +9,7 @@ import os
 import Muon.GUI.Common.utilities.xml_utils as xml_utils
 from Muon.GUI.Common.muon_group import MuonGroup
 from Muon.GUI.Common.muon_pair import MuonPair
-from Muon.GUI.Common.muon_base_difference import MuonBaseDifference
+from Muon.GUI.Common.muon_group_difference import MuonGroupDifference
 
 from mantid.api import WorkspaceGroup
 from mantid.kernel import ConfigServiceImpl
@@ -111,12 +111,10 @@ class MuonGroupPairContext(object):
     def __init__(self, check_group_contains_valid_detectors=lambda x: True):
         self._groups = []
         self._pairs = []
-        self._differences = []
         self._selected = ''
         self._selected_type = ''
         self._selected_pairs = []
         self._selected_groups = []
-        self._selected_differences = []
 
         self.message_notifier = MessageNotifier(self)
 
@@ -130,6 +128,7 @@ class MuonGroupPairContext(object):
 
     @property
     def groups(self):
+        # return [group for group in self._groups if isinstance(group, MuonGroup)]
         return self._groups
 
     @property
@@ -138,7 +137,7 @@ class MuonGroupPairContext(object):
 
     @property
     def differences(self):
-        return self._differences
+        return [group for group in self._groups if isinstance(group, MuonGroupDifference)] # need to add on pair diffs as well when implemented
 
     @property
     def selected_pairs(self):
@@ -147,10 +146,6 @@ class MuonGroupPairContext(object):
     @property
     def selected_groups(self):
         return self._selected_groups
-
-    @property
-    def selected_differences(self):
-        return self._selected_differences
 
     def clear(self):
         self.clear_groups()
@@ -163,16 +158,16 @@ class MuonGroupPairContext(object):
         self._pairs = []
 
     def clear_differences(self):
-        self._differences = []
+        for group in self._groups:
+            if isinstance(group, MuonGroupDifference):
+                self._groups.remove(group)
+        # Also loop pairs
 
     def clear_selected_pairs(self):
         self._selected_pairs = []
 
     def clear_selected_groups(self):
         self._selected_groups = []
-
-    def clear_selected_differences(self):
-        self._selected_differences = []
 
     @property
     def selected(self):
@@ -194,6 +189,7 @@ class MuonGroupPairContext(object):
 
     @property
     def group_names(self):
+        #return [group.name for group in self._groups if isinstance(group, MuonGroup)]
         return [group.name for group in self._groups]
 
     @property
@@ -202,17 +198,24 @@ class MuonGroupPairContext(object):
 
     @property
     def difference_names(self):
-        return [difference.name for difference in self._differences]
+        return [group.name for group in self._groups if isinstance(group, MuonGroupDifference)] # + pairs
 
     def add_group(self, group):
-        assert isinstance(group, MuonGroup)
-        if self._check_group_contains_valid_detectors(group):
+        if isinstance(group, MuonGroup):
+            if self._check_group_contains_valid_detectors(group):
+                if self._check_name_unique(group.name):
+                    self._groups.append(group)
+                else:
+                    raise ValueError('Groups and pairs must have unique names')
+            else:
+                raise ValueError('Invalid detectors in group {}'.format(group.name))
+        elif isinstance(group, MuonGroupDifference):
             if self._check_name_unique(group.name):
                 self._groups.append(group)
             else:
                 raise ValueError('Groups and pairs must have unique names')
         else:
-            raise ValueError('Invalid detectors in group {}'.format(group.name))
+            raise ValueError('Cannot add non-group type')
 
     def remove_group(self, group_name):
         for group in self._groups:
@@ -232,19 +235,6 @@ class MuonGroupPairContext(object):
             self._pairs.append(pair)
         else:
             raise ValueError('Groups and pairs must have unique names')
-
-    def add_difference(self, difference):
-        assert isinstance(difference, MuonBaseDifference)
-        if self._check_name_unique(difference.name):
-            self._differences.append(difference)
-        else:
-            raise ValueError('Groups and pairs must have unique names')
-
-    def remove_difference(self, difference_to_remove):
-        for difference in self._differences:
-            if difference_to_remove == difference.name:
-                self._differences.remove(difference_to_remove)
-                return
 
     def reset_group_and_pairs_to_default(self, workspace, instrument, main_field_direction, num_periods):
         default_groups, default_pairs, default_selected = get_default_grouping(workspace, instrument, main_field_direction)
@@ -268,7 +258,7 @@ class MuonGroupPairContext(object):
             self._selected = self.pair_names[0]
 
     def _check_name_unique(self, name):
-        for item in self._groups + self.pairs + self._differences:
+        for item in self._groups + self.pairs:
             if item.name == name:
                 return False
         return True
@@ -334,14 +324,6 @@ class MuonGroupPairContext(object):
     def remove_pair_from_selected_pairs(self, pair):
         if pair in self.pair_names and pair in self.selected_pairs:
             self._selected_pairs.remove(str(pair))
-
-    def add_difference_to_selected_differences(self, difference):
-        if difference in self.difference_names and difference not in self.selected_differences:
-            self._selected_differences.append(str(difference))
-
-    def remove_difference_from_selected_differences(self, difference):
-        if difference in self.difference_names and difference in self.selected_differences:
-            self._selected_differences.remove(str(difference))
 
     def remove_workspace_by_name(self, workspace_name):
         for item in self.groups + self.pairs:

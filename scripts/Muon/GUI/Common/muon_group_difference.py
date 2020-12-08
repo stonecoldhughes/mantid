@@ -6,9 +6,9 @@
 # SPDX - License - Identifier: GPL - 3.0 +
 # pylint: disable=C0111
 from Muon.GUI.Common.muon_base_difference import MuonBaseDifference
-from Muon.GUI.Common.muon_group import MuonGroup
+from Muon.GUI.Common.muon_base_group import MuonBaseGroup
 
-class MuonGroupDifference(MuonBaseDifference):
+class MuonGroupDifference(MuonBaseGroup):
     """
     Blah blah blah
     """
@@ -34,5 +34,3 @@ class MuonGroupDifference(MuonBaseDifference):
     @group_2.setter
     def group_2(self, group):
         self._group_2 = group
-
-    # update workspaces just call update workspace for group 1 and 2

@@ -121,6 +121,7 @@ class FittingTabPresenter(object):
                 self.reset_start_time_to_first_good_data_value()
 
     def handle_selected_group_pair_changed(self):
+        # from group notify subscirbers
         self.update_selected_workspace_list_for_fit()
         self._update_stored_fit_functions()
 
@@ -457,6 +458,7 @@ class FittingTabPresenter(object):
         self.handle_display_workspace_changed()
 
     def get_workspace_selected_list(self):
+        # could be useful
         if isinstance(self.context, FrequencyDomainAnalysisContext):
             freq = self.context._frequency_context.plot_type
         else:
@@ -616,6 +618,7 @@ class FittingTabPresenter(object):
         return self.context.group_pair_context.selected_groups + self.context.group_pair_context.selected_pairs
 
     def _get_selected_runs_and_groups_for_fitting(self):
+        # maybe?
         runs = 'All'
         groups_and_pairs = self._get_selected_groups_and_pairs()
         if self.view.is_simul_fit():

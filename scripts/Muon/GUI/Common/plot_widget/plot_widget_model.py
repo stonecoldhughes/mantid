@@ -55,6 +55,7 @@ class PlotWidgetModel(object):
         """
          :return: a list of workspace names and corresponding indices to plot
          """
+        # here?
         workspace_list = []
         if FREQ_PLOT_TYPE in plot_type:
             workspace_list += self.get_freq_workspaces_to_plot(group_or_pair, plot_type)
@@ -109,8 +110,11 @@ class PlotWidgetModel(object):
         :param plot_type: Whether to plot counts or asymmetry
         :return: a list of workspace names
         """
+        # foo
         try:
             if is_raw:
+                print(self.context.group_pair_context)
+                print(self.context.group_pair_context[current_group_pair])
                 workspace_list = self.context.group_pair_context[current_group_pair].get_asymmetry_workspace_names(
                     self.context.data_context.current_runs)
             else:

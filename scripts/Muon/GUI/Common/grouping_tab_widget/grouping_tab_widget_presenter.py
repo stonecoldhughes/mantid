@@ -273,6 +273,7 @@ class GroupingTabPresenter(object):
         self.handle_update_all_clicked()
 
     def difference_table_changed(self):
+        # Update both group and pair tables?
         self.handle_update_all_clicked()
 
     class LoadObserver(Observer):

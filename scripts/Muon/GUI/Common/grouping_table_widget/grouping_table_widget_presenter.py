@@ -202,7 +202,7 @@ class GroupingTablePresenter(object):
         self._view.disable_updates()
         self._view.clear()
 
-        for group in self._model.groups:
+        for group in [groups for groups in self._model.groups if isinstance(groups, MuonGroup)]:
             to_analyse = True if group.name in self._model.selected_groups else False
             display_period_warning = self._model.validate_periods_list(group.periods)
             color = row_colors[display_period_warning]

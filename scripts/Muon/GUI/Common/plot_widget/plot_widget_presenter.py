@@ -245,6 +245,7 @@ class PlotWidgetPresenterCommon(HomeTabSubWidget):
         the grouping widget analysis table
         :param group_pair_info: A dictionary containing information on the removed group/pair
         """
+        # here?
         is_added = group_pair_info["is_added"]
         name = group_pair_info["name"]
         if is_added:

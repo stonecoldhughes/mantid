@@ -28,8 +28,12 @@ def calculate_pair_data(pair: MuonPair, forward_group: str, backward_group: str,
     return pair_data
 
 
-def calculate_difference_data():
-    pass
+def calculate_difference_data(workspace_1, workspace_2):
+    params = {}
+    params["LHSWorkspace"] = workspace_1
+    params["RHSWorkspace"] = workspace_2
+    difference_data = algorithm_utils.run_Minus(params)
+    return difference_data
 
 
 def estimate_group_asymmetry_data(context, group, run, rebin, workspace_name, unormalised_workspace_name, periods):

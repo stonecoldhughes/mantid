@@ -257,4 +257,5 @@ def run_Minus(parameter_dict):
     alg.setProperty("OutputWorkspace", "__notUsed")
     alg.setProperties(parameter_dict)
     alg.execute()
+    print("run minus on " + parameter_dict["LHSWorkspace"] + " - " + parameter_dict["RHSWorkspace"])
     return alg.getProperty("OutputWorkspace").value

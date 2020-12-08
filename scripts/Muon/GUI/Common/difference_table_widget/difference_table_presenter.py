@@ -7,6 +7,8 @@
 import re
 from Muon.GUI.Common.muon_group_difference import MuonGroupDifference
 from Muon.GUI.Common.muon_pair_difference import MuonPairDifference
+from Muon.GUI.Common.muon_group import MuonGroup
+from mantidqt.utils.observer_pattern import GenericObservable
 from Muon.GUI.Common.utilities.run_string_utils import valid_name_regex
 from Muon.GUI.Common.grouping_tab_widget.grouping_tab_widget_model import RowValid
 from Muon.GUI.Common.grouping_table_widget.grouping_table_widget_presenter import row_colors, row_tooltips
@@ -24,6 +26,8 @@ class DifferenceTablePresenter(object):
         self._view.on_table_data_changed(self.handle_data_change)
 
         self._dataChangedNotifier = lambda: 0
+
+        self.selected_difference_group_changed_notifier = GenericObservable()
 
     def enable_editing(self):
         self._view.enable_editing()
@@ -45,7 +49,10 @@ class DifferenceTablePresenter(object):
 
         if difference_columns[col] == 'to_analyse':
             update_model = False
-            self.to_analyse_data_checkbox_changed(self._view.get_table_item(row, col).checkState(), self._view.get_table_item_text(row, 0))
+            if table[row][2] == 'group':
+                self.to_analyse_data_checkbox_changed_group_difference(self._view.get_table_item(row, col).checkState(), self._view.get_table_item_text(row, 0))
+            else:
+                pass
         if difference_columns[col] == 'group_or_pair':
             if changed_item_text == 'group':
                 if len(self._model.group_names) < 2:
@@ -98,38 +105,39 @@ class DifferenceTablePresenter(object):
                 difference = MuonGroupDifference(difference_name=entry[0],
                                                  group_1=entry[3],
                                                  group_2=entry[4])
+                self._model.add_group(difference)
             elif entry[2] == 'pair':
-                difference = MuonPairDifference(difference_name=entry[0],
-                                                 pair_1=entry[3],
-                                                 pair_2=entry[4])
+                pass
             else:
                 raise ValueError('Cannot add difference')
-            self._model.add_difference(difference)
 
     def update_view_from_model(self):
         self._view.disable_updates()
         self._view.clear()
 
         for difference in self._model.differences:
-            analyse = True if difference.name in self._model.selected_differences else False
+            analyse = True if difference.name in self._model.selected_groups else False
             self.add_difference_to_view(difference=difference, to_analyse=analyse)
 
         self._view.enable_updates()
 
     def update_group_selections(self):
-        groups = self._model.group_names
+        groups = [group.name for group in self._model.groups if isinstance(group, MuonGroup)]
         self._view.update_group_selections(groups)
 
     def update_pair_selections(self):
-        pairs = self._model.pair_names
+        pairs = self._model.pair_names # Need to make sure doesn't include diffs of pairs when implemented
         self._view.update_pair_selections(pairs)
 
-    def to_analyse_data_checkbox_changed(self, state, difference_name):
+    def to_analyse_data_checkbox_changed_group_difference(self, state, difference_name):
         difference_added = True if state == 2 else False
         if difference_added:
-            self._model.add_difference_to_analysis(difference_name)
+            self._model.add_group_to_analysis(difference_name)
         else:
-            self._model.remove_difference_from_analysis(difference_name)
+            self._model.remove_group_from_analysis(difference_name)
+
+        group_info = {'is_added': difference_added, 'name': difference_name}
+        self.selected_difference_group_changed_notifier.notify_subscribers(group_info)
 
     # ------------------------------------------------------------------------------------------------------------------
     # Add / Remove differences
@@ -148,18 +156,18 @@ class DifferenceTablePresenter(object):
                 is_group = True
                 if len(self._model.group_names) >= 2:
                     # Difference of groups
+                    # Might need to adjust for the fact that differences can be added in group names
                     group_pair_1 = self._model.group_names[0]
                     group_pair_2 = self._model.group_names[1]
                 else:
                     # Difference of pairs
+                    # Might need to adjust for the fact that differences can be added in group names
                     group_pair_1 = self._model.pair_names[0]
                     group_pair_2 = self._model.pair_names[1]
-
-                # if view is group or pair create right difference
                 if is_group:
                     difference = MuonGroupDifference(new_difference_name,group_pair_1,group_pair_2)
                 else:
-                    difference = MuonPairDifference(new_difference_name,group_pair_1,group_pair_2)
+                    pass # Pair to be implemented
                 self.add_difference(difference)
                 # notify data changed?
 
@@ -169,16 +177,20 @@ class DifferenceTablePresenter(object):
             return
         self.add_difference_to_model(difference)
         self.update_view_from_model()
+        self.notify_data_changed()
 
     def add_difference_to_model(self, difference):
-        self._model.add_difference(difference)
+        # If group difference add group, otherwise add pair
+        if isinstance(difference, MuonGroupDifference):
+            self._model.add_group(difference)
+        else:
+            pass
 
     def add_difference_to_view(self, difference,to_analyse=False,color=row_colors[RowValid.valid_for_all_runs],
                                tool_tip=row_tooltips[RowValid.valid_for_all_runs]):
         self._view.disable_updates()
         self.update_group_selections()
         self.update_pair_selections()
-        # assert is instance
         if isinstance(difference, MuonGroupDifference):
             entry = [str(difference.name), to_analyse, str('group'),
                      str(difference.group_1), str(difference.group_2)]

@@ -5,12 +5,15 @@
 #   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 # SPDX - License - Identifier: GPL - 3.0 +
 from Muon.GUI.Common.ADSHandler.workspace_naming import (get_raw_data_workspace_name, get_group_data_workspace_name,
+                                                         get_group_difference_data_workspace_name,
                                                          get_pair_asymmetry_name, get_base_data_directory,
                                                          get_group_asymmetry_name,
                                                          get_group_asymmetry_unnorm_name,
+                                                         get_group_difference_asymmetry_name,
+                                                         get_group_difference_asymmetry_unnorm_name,
                                                          get_deadtime_data_workspace_name)
 from Muon.GUI.Common.calculate_pair_and_group import calculate_group_data, calculate_pair_data, \
-    estimate_group_asymmetry_data, run_pre_processing
+    estimate_group_asymmetry_data, run_pre_processing, calculate_difference_data
 from Muon.GUI.Common.utilities.run_string_utils import run_list_to_string, run_string_to_list
 import Muon.GUI.Common.ADSHandler.workspace_naming as wsName
 from Muon.GUI.Common.contexts.muon_group_pair_context import get_default_grouping
@@ -18,7 +21,9 @@ from Muon.GUI.Common.contexts.muon_gui_context import PlotMode
 from Muon.GUI.Common.contexts.muon_context_ADS_observer import MuonContextADSObserver
 from Muon.GUI.Common.ADSHandler.muon_workspace_wrapper import MuonWorkspaceWrapper, WorkspaceGroupDefinition
 from mantidqt.utils.observer_pattern import Observable
+from Muon.GUI.Common.muon_group import MuonGroup
 from Muon.GUI.Common.muon_pair import MuonPair
+from Muon.GUI.Common.muon_group_difference import MuonGroupDifference
 from typing import List
 
 MUON_ANALYSIS_DEFAULT_X_RANGE = [0.0, 15.0]
@@ -27,11 +32,10 @@ MUON_ANALYSIS_DEFAULT_X_RANGE = [0.0, 15.0]
 class MuonContext(object):
     def __init__(self, muon_data_context=None, muon_gui_context=None,
                  muon_group_context=None, base_directory='Muon Data', muon_phase_context=None,
-                 workspace_suffix=' MA', fitting_context=None, frequency_context=None, muon_difference_context=None):
+                 workspace_suffix=' MA', fitting_context=None, frequency_context=None):
         self._data_context = muon_data_context
         self._gui_context = muon_gui_context
         self._group_pair_context = muon_group_context
-        self._difference_context = muon_difference_context
         self._phase_context = muon_phase_context
         self.fitting_context = fitting_context
         self.base_directory = base_directory
@@ -63,10 +67,6 @@ class MuonContext(object):
     @property
     def group_pair_context(self):
         return self._group_pair_context
-
-    @property
-    def difference_context(self):
-        return self._difference_context
 
     @property
     def phase_context(self):
@@ -104,6 +104,18 @@ class MuonContext(object):
 
         return group_workspace, group_asymmetry, group_asymmetry_unnormalised
 
+    def calculate_group_difference(self, group, run, rebin=False):
+        run_as_string = run_list_to_string(run)
+
+        name = get_group_difference_data_workspace_name(self, group.name, run_as_string, rebin=rebin)
+        asym_name = get_group_difference_asymmetry_name(self, group.name, run_as_string, rebin=rebin)
+        asym_name_unnorm = get_group_difference_asymmetry_unnorm_name(self, group.name, run_as_string,
+                                                           rebin=rebin)
+        workspace_1_name = self._group_pair_context[group.group_1].get_counts_workspace_for_run(run,rebin)
+        workspace_2_name = self._group_pair_context[group.group_2].get_counts_workspace_for_run(run,rebin)
+        group_workspace = calculate_difference_data(workspace_1_name, workspace_2_name)
+        return group_workspace
+
     def calculate_pair(self, pair: MuonPair, run: List[int], rebin: bool=False):
         try:
             forward_group_workspace_name = self._group_pair_context[pair.forward_group].get_counts_workspace_for_run(run, rebin)
@@ -121,26 +133,40 @@ class MuonContext(object):
         for run in self._data_context.current_runs:
             with WorkspaceGroupDefinition():
                 for group in self._group_pair_context.groups:
-                    run_as_string = run_list_to_string(run)
-                    group_name = group.name
-                    periods = run_list_to_string(group.periods)
 
-                    directory = get_base_data_directory(self, run_as_string)
+                    if isinstance(group, MuonGroup):
+                        run_as_string = run_list_to_string(run)
+                        group_name = group.name
+                        periods = run_list_to_string(group.periods)
 
-                    name = get_group_data_workspace_name(self, group_name, run_as_string, periods, rebin=False)
-                    asym_name = get_group_asymmetry_name(self, group_name, run_as_string, periods, rebin=False)
-                    asym_name_unnorm = get_group_asymmetry_unnorm_name(self, group_name, run_as_string, periods, rebin=False)
+                        directory = get_base_data_directory(self, run_as_string)
 
-                    self.group_pair_context[group_name].show_raw(run, directory + name, directory + asym_name,
-                                                                 asym_name_unnorm)
+                        name = get_group_data_workspace_name(self, group_name, run_as_string, periods, rebin=False)
+                        asym_name = get_group_asymmetry_name(self, group_name, run_as_string, periods, rebin=False)
+                        asym_name_unnorm = get_group_asymmetry_unnorm_name(self, group_name, run_as_string, periods, rebin=False)
 
-                    if self._do_rebin():
-                        name = get_group_data_workspace_name(self, group_name, run_as_string, periods, rebin=True)
-                        asym_name = get_group_asymmetry_name(self, group_name, run_as_string, periods, rebin=True)
-                        asym_name_unnorm = get_group_asymmetry_unnorm_name(self, group_name, run_as_string, periods, rebin=True)
+                        self.group_pair_context[group_name].show_raw(run, directory + name, directory + asym_name,
+                                                                     asym_name_unnorm)
 
-                        self.group_pair_context[group_name].show_rebin(run, directory + name, directory + asym_name,
-                                                                       asym_name_unnorm)
+                        if self._do_rebin():
+                            name = get_group_data_workspace_name(self, group_name, run_as_string, periods, rebin=True)
+                            asym_name = get_group_asymmetry_name(self, group_name, run_as_string, periods, rebin=True)
+                            asym_name_unnorm = get_group_asymmetry_unnorm_name(self, group_name, run_as_string, periods, rebin=True)
+
+                            self.group_pair_context[group_name].show_rebin(run, directory + name, directory + asym_name,
+                                                                           asym_name_unnorm)
+                    elif isinstance(group, MuonGroupDifference):
+                        run_as_string = run_list_to_string(run)
+                        group_name = group.name
+
+                        name = get_group_difference_data_workspace_name(self, group_name, run_as_string, rebin=False)
+                        asym_name = get_group_difference_asymmetry_name(self, group_name, run_as_string, rebin=False)
+                        asym_name_unnorm = get_group_difference_asymmetry_unnorm_name(self, group_name, run_as_string,
+                                                                           rebin=False)
+                        self.group_pair_context[group_name].show_raw(run, directory + name, directory + asym_name,
+                                                                     asym_name_unnorm)
+                    else:
+                        raise ValueError("Group is not of type group or group difference")
 
     def show_all_pairs(self):
         self.calculate_all_pairs()
@@ -195,26 +221,23 @@ class MuonContext(object):
         for run in self._data_context.current_runs:
             run_pre_processing(context=self, run=run, rebin=rebin)
             for group in self._group_pair_context.groups:
-                group_workspace, group_asymmetry, group_asymmetry_unormalised = \
-                     self.calculate_group(group, run, rebin=rebin)
+                if isinstance(group, MuonGroupDifference):
+                    # erm what
+                    #group_workspace, group_asymmetry, group_asymmetry_unormalised = \
+                     #   self.calculate_group_difference(group, run, rebin=rebin)
+                    group_workspace = self.calculate_group_difference(group, run, rebin=rebin)
 
-                # If this run contains none of the relevant periods for the group no
-                # workspace is created.
-                if not group_workspace:
-                    continue
+                else:
+                    group_workspace, group_asymmetry, group_asymmetry_unormalised = \
+                         self.calculate_group(group, run, rebin=rebin)
 
-                self.group_pair_context[group.name].update_workspaces(run, group_workspace, group_asymmetry,
-                                                                      group_asymmetry_unormalised, rebin=rebin)
+                    # If this run contains none of the relevant periods for the group no
+                    # workspace is created.
+                    if not group_workspace:
+                        continue
 
-    def calculate_differences(self):
-        self._calculate_differences()
-
-    def calculate_difference(self):
-        pass
-
-    def _calculate_differences(self):
-        for run in self._data_context.current_runs:
-            pass
+                    self.group_pair_context[group.name].update_workspaces(run, group_workspace, group_asymmetry,
+                                                                          group_asymmetry_unormalised, rebin=rebin)
 
     def update_current_data(self):
         # Update the current data; resetting the groups and pairs to their

@@ -240,6 +240,10 @@ class MuonAnalysisGui(QtWidgets.QMainWindow):
         self.grouping_tab_widget.pairing_table_widget.selected_pair_changed_notifier.add_subscriber(
             self.fitting_tab.fitting_tab_presenter.selected_group_pair_observer)
 
+        # Difference observer?
+        self.grouping_tab_widget.difference_table_widget.selected_difference_group_changed_notifier.add_subscriber(
+            self.plot_widget.presenter.added_group_or_pair_observer)
+
         self.grouping_tab_widget.pairing_table_widget.selected_pair_changed_notifier.add_subscriber(
             self.plot_widget.presenter.added_group_or_pair_observer)
 

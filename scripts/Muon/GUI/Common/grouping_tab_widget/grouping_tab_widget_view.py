@@ -125,7 +125,7 @@ class GroupingTabView(QtWidgets.QWidget):
     def update_tables(self):
         self._grouping_table.update_view_from_model()
         self._pairing_table.update_view_from_model()
-        # Update diff table
+        self._difference_table.update_view_from_model()
 
     def set_description_text(self, text):
         self.description_edit.setText(text)
