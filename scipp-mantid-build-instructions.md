@@ -26,7 +26,7 @@ git pull origin master # (possibly have to resolve conficts here)
 mkdir build
 cd build
 # download, configure, build, install scipp
-cmake -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DENABLE_WORKBENCH=OFF, -DENABLE_MANTIDPLOT=OFF -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 -DENABLE_SCIPP=ON ~/sources/mantid/
+cmake -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DENABLE_CPACK=ON -DENABLE_WORKBENCH=OFF, -DENABLE_MANTIDPLOT=OFF -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 -DENABLE_SCIPP=ON ~/sources/mantid/
 ninja Framework workbench
 cpack .
 ```
