@@ -144,6 +144,24 @@ class GroupingTabModel(object):
         for name in name_list:
             self._groups_and_pairs.remove_pair(name)
 
+    def remove_differences_by_name(self, name_list):
+        for name in name_list:
+            if name in self._groups_and_pairs.group_names:
+                self._groups_and_pairs.remove_group(name)
+            elif name in self._groups_and_pairs.pair_names:
+                self._groups_and_pairs.remove_pair(name)
+            else:
+                raise ValueError("Cannot remove difference " + name)
+
+    def remove_differences_from_analysis(self, name_list):
+        for name in name_list:
+            if name in self._groups_and_pairs.group_names:
+                self._groups_and_pairs.remove_group_from_selected_groups(name)
+            elif name in self._groups_and_pairs.pair_names:
+                self._groups_and_pairs.remove_pair_from_selected_pairs(name)
+            else:
+                raise ValueError("Cannot remove difference " + name)
+
     def construct_empty_group(self, _group_index):
         return construct_empty_group(self.group_names, _group_index)
 

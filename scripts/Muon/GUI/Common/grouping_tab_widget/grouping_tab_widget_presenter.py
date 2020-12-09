@@ -187,6 +187,7 @@ class GroupingTabPresenter(object):
         self.grouping_table_widget.disable_editing()
         self.pairing_table_widget.disable_editing()
         self.difference_table_widget.disable_editing()
+        self.difference_table_widget.disable_editing()
 
     def enable_editing_without_notifying_subscribers(self):
         self._view.set_buttons_enabled(True)

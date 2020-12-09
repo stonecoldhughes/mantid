@@ -253,8 +253,8 @@ def extract_single_spec(ws, spec, output_workspace_name):
 def run_Minus(parameter_dict):
     alg = mantid.AlgorithmManager.create("Minus")
     alg.initialize()
-    alg.setAlwaysStoreInADS(False)
-    alg.setProperty("OutputWorkspace", "__notUsed")
+    alg.setAlwaysStoreInADS(True)
+    alg.setProperty("OutputWorkspace", "notUsed")
     alg.setProperties(parameter_dict)
     alg.execute()
     print("run minus on " + parameter_dict["LHSWorkspace"] + " - " + parameter_dict["RHSWorkspace"])

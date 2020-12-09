@@ -210,18 +210,19 @@ class DifferenceTablePresenter(object):
         else:
             self._view.remove_selected_differences()
             self.remove_selected_rows_in_view_and_model(difference_names)
-        # Notify data changed
         self.notify_data_changed()
 
     def remove_last_row_in_view_and_model(self):
         if self._view.num_rows() > 0:
             name = self._view.get_table_contents()[-1][0]
             self._view.remove_last_row()
+            self._model.remove_differences_from_analysis([name])
             self._model.remove_differences_by_name([name])
-            # Remove from analysis etc
 
     def remove_selected_rows_in_view_and_model(self, difference_names):
-        pass
+        self._view.remove_selected_differences()
+        self._model.remove_differences_from_analysis(difference_names)
+        self._model.remove_differences_by_name(difference_names)
 
     # ------------------------------------------------------------------------------------------------------------------
     # Table entry validation

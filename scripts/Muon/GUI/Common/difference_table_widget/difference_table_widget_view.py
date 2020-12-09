@@ -332,12 +332,14 @@ class DifferenceTableView(QtWidgets.QWidget):
         self.disable_updates()
         self._disabled = False
         self._enable_all_buttons()
+        self._enable_all_table_items()
         self.enable_updates()
 
     def disable_editing(self):
         self.disable_updates()
         self._disabled = True
         self._disable_all_buttons()
+        self._disable_all_table_items()
         self.enable_updates()
 
     def _enable_all_buttons(self):
@@ -347,4 +349,10 @@ class DifferenceTableView(QtWidgets.QWidget):
     def _disable_all_buttons(self):
         self.add_difference_button.setEnabled(False)
         self.remove_difference_button.setEnabled(False)
+
+    def _enable_all_table_items(self):
+        self.difference_table.setEnabled(True)
+
+    def _disable_all_table_items(self):
+        self.difference_table.setEnabled(False)
 
