@@ -19,11 +19,25 @@ scipp is introduced as a cmake external project, and is downloaded, configured a
 ### Commands Required
 
 Essential steps are much like the following
-```
+```bash
+conda deactivate # Ensure you are NOT using any conda environment
 git checkout scipp_with_mantid
 git pull origin master # (possibly have to resolve conficts here)
-cd build_directory
-cmake . # download, configure, build, install scipp
+mkdir build
+cd build
+# download, configure, build, install scipp
+cmake -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DENABLE_WORKBENCH=OFF, -DENABLE_MANTIDPLOT=OFF -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 -DENABLE_SCIPP=ON ~/sources/mantid/
 ninja Framework workbench
 cpack .
+```
+
+## Installing and running
+
+The resulting Drag and drop package can be distributed and installed into Applications in the usual manner.
+
+Jupyter and other critical python dependencies need to be pip installed into the MantidWorkbench site-packages. Jupyter extensions need to be enabled at runtime and the correct jupyter instance with python kernel (all from MantidWorkbench.app) need to be run.
+
+```bash
+install_jupyter.sh # on owncloud
+run.sh # on owncloud
 ```
