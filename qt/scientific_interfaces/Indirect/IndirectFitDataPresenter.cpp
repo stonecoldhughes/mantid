@@ -202,7 +202,7 @@ void IndirectFitDataPresenter::replaceHandle(const std::string &workspaceName,
 DataForParameterEstimationCollection
 IndirectFitDataPresenter::getDataForParameterEstimation(
     const EstimationDataSelector &selector) const {
-  return m_model->getDataForParameterEstimation(std::move(selector));
+  return m_model->getDataForParameterEstimation(selector);
 }
 
 void IndirectFitDataPresenter::selectReplacedWorkspace(

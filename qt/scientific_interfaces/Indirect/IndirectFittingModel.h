@@ -140,7 +140,7 @@ public:
   void
   cleanFailedSingleRun(const Mantid::API::IAlgorithm_sptr &fittingAlgorithm,
                        TableDatasetIndex index);
-  DataForParameterEstimationCollection
+  virtual DataForParameterEstimationCollection
   getDataForParameterEstimation(const EstimationDataSelector &selector) const;
   std::unique_ptr<IIndirectFitDataModel> m_fitDataModel;
   void removeFittingData();
