@@ -16,6 +16,7 @@ New Features
 - Added QLineEdit to SampleLogs widget to allow filtering its entries
 - Time series sample logs in multiperiod event workspaces can now be filtered by current period.
 - Added more options to the workbench plot settings, including tick customisation and enabling grids by default.
+- Added a setting to control the positional (ontop vs floating) behavior of plot windows and guis accessible from the workspace widget.
 
 Improvements
 ############
