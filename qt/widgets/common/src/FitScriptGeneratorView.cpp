@@ -40,7 +40,6 @@ namespace MantidQt {
 namespace MantidWidgets {
 
 using ColumnIndex = FitScriptGeneratorDataTable::ColumnIndex;
-using FittingType = FitOptionsBrowser::FittingType;
 using ViewEvent = IFitScriptGeneratorView::Event;
 
 FitScriptGeneratorView::FitScriptGeneratorView(
@@ -50,14 +49,12 @@ FitScriptGeneratorView::FitScriptGeneratorView(
       m_dataTable(std::make_unique<FitScriptGeneratorDataTable>()),
       m_functionTreeView(std::make_unique<FunctionTreeView>(nullptr, true)),
       m_fitOptionsBrowser(std::make_unique<FitOptionsBrowser>(
-          nullptr, FittingType::SimultaneousAndSequential)) {
+          nullptr, FittingMode::SimultaneousAndSequential)) {
   m_ui.setupUi(this);
 
   m_ui.fDataTable->layout()->addWidget(m_dataTable.get());
   m_ui.splitter->addWidget(m_functionTreeView.get());
   m_ui.splitter->addWidget(m_fitOptionsBrowser.get());
-
-  m_functionTreeView->setMultiDomainFunctionPrefix("f0.");
 
   setFitBrowserOptions(fitOptions);
   connectUiSignals();
@@ -99,6 +96,11 @@ void FitScriptGeneratorView::connectUiSignals() {
   connect(m_functionTreeView.get(), SIGNAL(functionHelpRequest()), this,
           SLOT(onFunctionHelpRequested()));
 
+  connect(m_fitOptionsBrowser.get(), SIGNAL(changedToSequentialFitting()), this,
+          SLOT(onChangeToSequentialFitting()));
+  connect(m_fitOptionsBrowser.get(), SIGNAL(changedToSimultaneousFitting()),
+          this, SLOT(onChangeToSimultaneousFitting()));
+
   /// Disconnected because it causes a crash when selecting a table row while
   /// editing a parameters value. This is because selecting a different row will
   /// change the current function in the FunctionTreeView. The closeEditor slot
@@ -124,9 +126,9 @@ void FitScriptGeneratorView::setFitBrowserOption(QString const &name,
 
 void FitScriptGeneratorView::setFittingType(QString const &fitType) {
   if (fitType == "Sequential")
-    m_fitOptionsBrowser->setCurrentFittingType(FittingType::Sequential);
+    m_fitOptionsBrowser->setCurrentFittingType(FittingMode::Sequential);
   else if (fitType == "Simultaneous")
-    m_fitOptionsBrowser->setCurrentFittingType(FittingType::Simultaneous);
+    m_fitOptionsBrowser->setCurrentFittingType(FittingMode::Simultaneous);
   else
     throw std::invalid_argument("Invalid fitting type '" +
                                 fitType.toStdString() + "' provided.");
@@ -135,6 +137,8 @@ void FitScriptGeneratorView::setFittingType(QString const &fitType) {
 void FitScriptGeneratorView::subscribePresenter(
     IFitScriptGeneratorPresenter *presenter) {
   m_presenter = presenter;
+  m_presenter->notifyPresenter(ViewEvent::FittingModeChanged,
+                               m_fitOptionsBrowser->getCurrentFittingType());
 }
 
 void FitScriptGeneratorView::onRemoveClicked() {
@@ -200,6 +204,16 @@ void FitScriptGeneratorView::onFunctionHelpRequested() {
   if (auto const function = m_functionTreeView->getSelectedFunction())
     m_functionTreeView->showFunctionHelp(
         QString::fromStdString(function->name()));
+}
+
+void FitScriptGeneratorView::onChangeToSequentialFitting() {
+  m_presenter->notifyPresenter(ViewEvent::FittingModeChanged,
+                               FittingMode::Sequential);
+}
+
+void FitScriptGeneratorView::onChangeToSimultaneousFitting() {
+  m_presenter->notifyPresenter(ViewEvent::FittingModeChanged,
+                               FittingMode::Simultaneous);
 }
 
 std::string FitScriptGeneratorView::workspaceName(FitDomainIndex index) const {
@@ -276,10 +290,13 @@ bool FitScriptGeneratorView::isApplyFunctionChangesToAllChecked() const {
 
 void FitScriptGeneratorView::clearFunction() { m_functionTreeView->clear(); }
 
-void FitScriptGeneratorView::setFunction(IFunction_sptr const &function) const {
+void FitScriptGeneratorView::showMultiDomainPrefix(bool showPrefix) {
+  m_dataTable->setFunctionPrefixVisible(showPrefix);
   m_functionTreeView->setMultiDomainFunctionPrefix(
-      m_dataTable->selectedDomainFunctionPrefix());
+      showPrefix ? m_dataTable->selectedDomainFunctionPrefix() : "");
+}
 
+void FitScriptGeneratorView::setFunction(IFunction_sptr const &function) const {
   if (function)
     m_functionTreeView->setFunction(function);
   else

@@ -16,6 +16,7 @@
 #include "MantidKernel/Logger.h"
 #include "MantidQtWidgets/Common/AlgorithmRunner.h"
 #include "MantidQtWidgets/Common/FitOptionsBrowser.h"
+#include "MantidQtWidgets/Common/FittingMode.h"
 #include "MantidQtWidgets/Common/FunctionBrowser.h"
 // 3rd party library headers
 #include <QMenu>
@@ -119,9 +120,9 @@ void FitControl::fit() {
     return;
   }
   auto fittingType = m_fitOptionsBrowser->getCurrentFittingType();
-  if (fittingType == MantidWidgets::FitOptionsBrowser::Simultaneous) {
+  if (fittingType == MantidWidgets::FittingMode::Simultaneous) {
     fitSimultaneous();
-  } else if (fittingType == MantidWidgets::FitOptionsBrowser::Sequential) {
+  } else if (fittingType == MantidWidgets::FittingMode::Sequential) {
     fitSequential();
   } else {
     throw std::logic_error("Unrecognised fitting type");

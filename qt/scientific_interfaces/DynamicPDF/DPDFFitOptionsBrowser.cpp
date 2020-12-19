@@ -17,7 +17,7 @@ namespace {
 Mantid::Kernel::Logger g_log("DynamicPDF");
 }
 
-using Fittype = MantidQt::MantidWidgets::FitOptionsBrowser::FittingType;
+using Fittype = MantidQt::MantidWidgets::FittingMode;
 
 namespace MantidQt {
 namespace CustomInterfaces {
