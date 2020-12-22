@@ -47,11 +47,11 @@ public:
   /// Copy data from another ISpectrum with double-dynamic dispatch.
   virtual void copyDataFrom(const ISpectrum &source) = 0;
 
-  virtual void setX(const Kernel::cow_ptr<HistogramData::HistogramX> &X) = 0;
+  virtual void setX(const std::shared_ptr<HistogramData::HistogramX> &X) = 0;
   virtual MantidVec &dataX() = 0;
   virtual const MantidVec &dataX() const = 0;
   virtual const MantidVec &readX() const = 0;
-  virtual Kernel::cow_ptr<HistogramData::HistogramX> ptrX() const = 0;
+  virtual std::shared_ptr<HistogramData::HistogramX> ptrX() const = 0;
 
   virtual MantidVec &dataDx() = 0;
   virtual const MantidVec &dataDx() const = 0;
@@ -206,29 +206,29 @@ public:
     checkIsYAndEWritable();
     return mutableHistogramRef().mutableE();
   }
-  Kernel::cow_ptr<HistogramData::HistogramX> sharedX() const {
+  std::shared_ptr<HistogramData::HistogramX> sharedX() const {
     return histogramRef().sharedX();
   }
-  virtual Kernel::cow_ptr<HistogramData::HistogramY> sharedY() const {
+  virtual std::shared_ptr<HistogramData::HistogramY> sharedY() const {
     return histogramRef().sharedY();
   }
-  virtual Kernel::cow_ptr<HistogramData::HistogramE> sharedE() const {
+  virtual std::shared_ptr<HistogramData::HistogramE> sharedE() const {
     return histogramRef().sharedE();
   }
-  Kernel::cow_ptr<HistogramData::HistogramDx> sharedDx() const {
+  std::shared_ptr<HistogramData::HistogramDx> sharedDx() const {
     return histogramRef().sharedDx();
   }
-  void setSharedX(const Kernel::cow_ptr<HistogramData::HistogramX> &x) & {
+  void setSharedX(const std::shared_ptr<HistogramData::HistogramX> &x) & {
     mutableHistogramRef().setSharedX(x);
   }
-  void setSharedDx(const Kernel::cow_ptr<HistogramData::HistogramDx> &dx) & {
+  void setSharedDx(const std::shared_ptr<HistogramData::HistogramDx> &dx) & {
     mutableHistogramRef().setSharedDx(dx);
   }
-  void setSharedY(const Kernel::cow_ptr<HistogramData::HistogramY> &y) & {
+  void setSharedY(const std::shared_ptr<HistogramData::HistogramY> &y) & {
     checkIsYAndEWritable();
     mutableHistogramRef().setSharedY(y);
   }
-  void setSharedE(const Kernel::cow_ptr<HistogramData::HistogramE> &e) & {
+  void setSharedE(const std::shared_ptr<HistogramData::HistogramE> &e) & {
     checkIsYAndEWritable();
     mutableHistogramRef().setSharedE(e);
   }

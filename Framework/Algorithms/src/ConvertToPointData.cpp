@@ -52,8 +52,8 @@ size_t ConvertToPointData::getNewXSize(const std::size_t ySize) const {
  * Calculate the X point values
  * @param inputX :: A const reference to the input data
  */
-Kernel::cow_ptr<HistogramData::HistogramX> ConvertToPointData::calculateXPoints(
-    Kernel::cow_ptr<HistogramData::HistogramX> inputX) const {
+std::shared_ptr<HistogramData::HistogramX> ConvertToPointData::calculateXPoints(
+    std::shared_ptr<HistogramData::HistogramX> inputX) const {
   return HistogramData::Points(HistogramData::BinEdges(std::move(inputX)))
       .cowData();
 }

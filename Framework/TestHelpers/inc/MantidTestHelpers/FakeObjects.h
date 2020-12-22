@@ -72,15 +72,14 @@ public:
     other.copyDataInto(*this);
   }
 
-  void setX(const Mantid::Kernel::cow_ptr<Mantid::HistogramData::HistogramX> &X)
-      override {
+  void
+  setX(const std::shared_ptr<Mantid::HistogramData::HistogramX> &X) override {
     m_histogram.setX(X);
   }
   MantidVec &dataX() override { return m_histogram.dataX(); }
   const MantidVec &dataX() const override { return m_histogram.dataX(); }
   const MantidVec &readX() const override { return m_histogram.readX(); }
-  Mantid::Kernel::cow_ptr<Mantid::HistogramData::HistogramX>
-  ptrX() const override {
+  std::shared_ptr<Mantid::HistogramData::HistogramX> ptrX() const override {
     return m_histogram.ptrX();
   }
 

@@ -278,33 +278,33 @@ public:
   HistogramData::HistogramE &mutableE(const size_t index) & {
     return getSpectrumWithoutInvalidation(index).mutableE();
   }
-  Kernel::cow_ptr<HistogramData::HistogramX> sharedX(const size_t index) const {
+  std::shared_ptr<HistogramData::HistogramX> sharedX(const size_t index) const {
     return getSpectrum(index).sharedX();
   }
-  Kernel::cow_ptr<HistogramData::HistogramY> sharedY(const size_t index) const {
+  std::shared_ptr<HistogramData::HistogramY> sharedY(const size_t index) const {
     return getSpectrum(index).sharedY();
   }
-  Kernel::cow_ptr<HistogramData::HistogramE> sharedE(const size_t index) const {
+  std::shared_ptr<HistogramData::HistogramE> sharedE(const size_t index) const {
     return getSpectrum(index).sharedE();
   }
-  Kernel::cow_ptr<HistogramData::HistogramDx>
+  std::shared_ptr<HistogramData::HistogramDx>
   sharedDx(const size_t index) const {
     return getSpectrum(index).sharedDx();
   }
   void setSharedX(const size_t index,
-                  const Kernel::cow_ptr<HistogramData::HistogramX> &x) & {
+                  const std::shared_ptr<HistogramData::HistogramX> &x) & {
     getSpectrum(index).setSharedX(x);
   }
   void setSharedDx(const size_t index,
-                   const Kernel::cow_ptr<HistogramData::HistogramDx> &dx) & {
+                   const std::shared_ptr<HistogramData::HistogramDx> &dx) & {
     getSpectrumWithoutInvalidation(index).setSharedDx(dx);
   }
   void setSharedY(const size_t index,
-                  const Kernel::cow_ptr<HistogramData::HistogramY> &y) & {
+                  const std::shared_ptr<HistogramData::HistogramY> &y) & {
     getSpectrumWithoutInvalidation(index).setSharedY(y);
   }
   void setSharedE(const size_t index,
-                  const Kernel::cow_ptr<HistogramData::HistogramE> &e) & {
+                  const std::shared_ptr<HistogramData::HistogramE> &e) & {
     getSpectrumWithoutInvalidation(index).setSharedE(e);
   }
   // Methods for getting read-only access to the data.
@@ -373,16 +373,9 @@ public:
   virtual void getXMinMax(double &xmin, double &xmax) const;
 
   /// Deprecated, use sharedX() instead. Returns a pointer to the x data
-  virtual Kernel::cow_ptr<HistogramData::HistogramX>
+  virtual std::shared_ptr<HistogramData::HistogramX>
   refX(const std::size_t index) const {
     return getSpectrum(index).ptrX();
-  }
-
-  /// Deprecated, use setSharedX() instead. Set the specified X array to point
-  /// to the given existing array
-  virtual void setX(const std::size_t index,
-                    const Kernel::cow_ptr<HistogramData::HistogramX> &X) {
-    getSpectrum(index).setX(X);
   }
 
   /// Deprecated, use setSharedX() instead. Set the specified X array to point

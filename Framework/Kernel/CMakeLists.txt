@@ -339,7 +339,6 @@ set(TEST_FILES
     ConfigObserverTest.h
     ConfigPropertyObserverTest.h
     ConfigServiceTest.h
-    CowPtrTest.h
     DataServiceTest.h
     DateAndTimeHelpersTest.h
     DateTimeValidatorTest.h
@@ -382,7 +381,6 @@ set(TEST_FILES
     MDUnitTest.h
     MRUListTest.h
     MagneticIonTest.h
-    MakeCowTest.h
     MandatoryValidatorTest.h
     MaskedPropertyTest.h
     MaterialBuilderTest.h

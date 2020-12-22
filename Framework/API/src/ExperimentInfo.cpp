@@ -514,7 +514,7 @@ const Sample &ExperimentInfo::sample() const {
  */
 Sample &ExperimentInfo::mutableSample() {
   populateIfNotLoaded();
-  return m_sample.access();
+  return *m_sample;
 }
 
 /** Get a constant reference to the Run object associated with this workspace.
@@ -532,16 +532,16 @@ const Run &ExperimentInfo::run() const {
  */
 Run &ExperimentInfo::mutableRun() {
   populateIfNotLoaded();
-  return m_run.access();
+  return *m_run;
 }
 
 /// Set the run object. Use in particular to clear run without copying old run.
-void ExperimentInfo::setSharedRun(Kernel::cow_ptr<Run> run) {
+void ExperimentInfo::setSharedRun(std::shared_ptr<Run> run) {
   m_run = std::move(run);
 }
 
 /// Return the cow ptr of the run
-Kernel::cow_ptr<Run> ExperimentInfo::sharedRun() { return m_run; }
+std::shared_ptr<Run> ExperimentInfo::sharedRun() { return m_run; }
 
 /**
  * Get an experimental log either by log name or by type, e.g.
@@ -863,7 +863,7 @@ ComponentInfo &ExperimentInfo::mutableComponentInfo() {
 
 /// Sets the SpectrumDefinition for all spectra.
 void ExperimentInfo::setSpectrumDefinitions(
-    Kernel::cow_ptr<std::vector<SpectrumDefinition>> spectrumDefinitions) {
+    std::shared_ptr<std::vector<SpectrumDefinition>> spectrumDefinitions) {
   if (spectrumDefinitions) {
     m_spectrumInfo = std::make_unique<Beamline::SpectrumInfo>(
         std::move(spectrumDefinitions));

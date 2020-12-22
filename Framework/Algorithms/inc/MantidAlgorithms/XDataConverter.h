@@ -42,8 +42,8 @@ protected:
   /// Returns the size of the new X vector
   virtual std::size_t getNewXSize(const std::size_t ySize) const = 0;
   /// Calculate the X point values. Implement in an inheriting class.
-  virtual Kernel::cow_ptr<HistogramData::HistogramX> calculateXPoints(
-      const Kernel::cow_ptr<HistogramData::HistogramX> inputX) const = 0;
+  virtual std::shared_ptr<HistogramData::HistogramX> calculateXPoints(
+      const std::shared_ptr<HistogramData::HistogramX> inputX) const = 0;
 
 private:
   /// Override init
@@ -60,7 +60,7 @@ private:
   /// Flag if the X data is shared
   bool m_sharedX;
   /// Cached data for shared X values
-  Kernel::cow_ptr<HistogramData::HistogramX> m_cachedX{nullptr};
+  std::shared_ptr<HistogramData::HistogramX> m_cachedX{nullptr};
 };
 
 } // namespace Algorithms

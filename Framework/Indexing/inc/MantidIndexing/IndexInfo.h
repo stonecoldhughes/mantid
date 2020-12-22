@@ -88,9 +88,9 @@ public:
   void
   setSpectrumDefinitions(std::vector<SpectrumDefinition> spectrumDefinitions);
   void
-  setSpectrumDefinitions(const Kernel::cow_ptr<std::vector<SpectrumDefinition>>
+  setSpectrumDefinitions(const std::shared_ptr<std::vector<SpectrumDefinition>>
                              &spectrumDefinitions);
-  const Kernel::cow_ptr<std::vector<SpectrumDefinition>> &
+  const std::shared_ptr<std::vector<SpectrumDefinition>> &
   spectrumDefinitions() const;
 
   SpectrumIndexSet makeIndexSet() const;
@@ -117,9 +117,9 @@ private:
   Parallel::StorageMode m_storageMode;
   std::unique_ptr<Parallel::Communicator> m_communicator;
 
-  Kernel::cow_ptr<std::vector<SpectrumDefinition>> m_spectrumDefinitions{
+  std::shared_ptr<std::vector<SpectrumDefinition>> m_spectrumDefinitions{
       nullptr};
-  mutable Kernel::cow_ptr<SpectrumNumberTranslator> m_spectrumNumberTranslator{
+  mutable std::shared_ptr<SpectrumNumberTranslator> m_spectrumNumberTranslator{
       nullptr};
 };
 

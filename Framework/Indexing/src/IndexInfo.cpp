@@ -73,7 +73,7 @@ IndexInfo::IndexInfo(std::vector<IndexType> indices, const IndexInfo &parent)
   if (const auto parentSpectrumDefinitions = parent.spectrumDefinitions()) {
     m_spectrumDefinitions = Kernel::make_cow<std::vector<SpectrumDefinition>>();
     const auto &indexSet = parent.makeIndexSet(indices);
-    auto &specDefs = m_spectrumDefinitions.access();
+    auto &specDefs = *m_spectrumDefinitions;
     specDefs.reserve(specDefs.size() + indexSet.size());
     std::transform(indexSet.begin(), indexSet.end(),
                    std::back_inserter(specDefs),
@@ -174,7 +174,7 @@ void IndexInfo::setSpectrumDefinitions(
  * indices. Validation requires access to the instrument and thus cannot be done
  * internally in IndexInfo, i.e., spectrum definitions must be set by hand. */
 void IndexInfo::setSpectrumDefinitions(
-    const Kernel::cow_ptr<std::vector<SpectrumDefinition>>
+    const std::shared_ptr<std::vector<SpectrumDefinition>>
         &spectrumDefinitions) {
   if (!spectrumDefinitions || (size() != spectrumDefinitions->size()))
     throw std::runtime_error(
@@ -183,7 +183,7 @@ void IndexInfo::setSpectrumDefinitions(
 }
 
 /// Returns the spectrum definitions.
-const Kernel::cow_ptr<std::vector<SpectrumDefinition>> &
+const std::shared_ptr<std::vector<SpectrumDefinition>> &
 IndexInfo::spectrumDefinitions() const {
   return m_spectrumDefinitions;
 }

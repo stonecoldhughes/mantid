@@ -35,8 +35,8 @@ FrequencyStandardDeviations::FrequencyStandardDeviations(
                              "does not match.");
   // Cannot move counts private data since it is of different type.
   m_data = counts.cowData();
-  counts = Kernel::cow_ptr<HistogramE>(nullptr);
-  auto &data = m_data.access();
+  counts = std::shared_ptr<HistogramE>(nullptr);
+  auto &data = *m_data;
   for (size_t i = 0; i < data.size(); ++i) {
     data[i] /= edges[i + 1] - edges[i];
   }

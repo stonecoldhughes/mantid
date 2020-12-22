@@ -74,7 +74,7 @@ public:
       space->setInstrument(instr);
 
       MantidVecPtr vec;
-      vec.access().resize(5, 1.0);
+      vec->resize(5, 1.0);
       std::vector<detid_t> det_ids = instr->getDetectorIDs();
       for (int j = 0; j < numspec; ++j) {
         // Just one event per pixel

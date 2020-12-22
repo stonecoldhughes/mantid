@@ -34,11 +34,11 @@ public:
 
   void copyDataFrom(const ISpectrum &source) override;
 
-  void setX(const Kernel::cow_ptr<HistogramData::HistogramX> &X) override;
+  void setX(const std::shared_ptr<HistogramData::HistogramX> &X) override;
   MantidVec &dataX() override;
   const MantidVec &dataX() const override;
   const MantidVec &readX() const override;
-  Kernel::cow_ptr<HistogramData::HistogramX> ptrX() const override;
+  std::shared_ptr<HistogramData::HistogramX> ptrX() const override;
 
   MantidVec &dataDx() override;
   const MantidVec &dataDx() const override;

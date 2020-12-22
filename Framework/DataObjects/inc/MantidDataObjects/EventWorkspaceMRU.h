@@ -60,8 +60,8 @@ public:
  */
 class DLLExport EventWorkspaceMRU {
 public:
-  using YType = Kernel::cow_ptr<HistogramData::HistogramY>;
-  using EType = Kernel::cow_ptr<HistogramData::HistogramE>;
+  using YType = std::shared_ptr<HistogramData::HistogramY>;
+  using EType = std::shared_ptr<HistogramData::HistogramE>;
   using YWithMarker = TypeWithMarker<YType>;
   using EWithMarker = TypeWithMarker<EType>;
   // Typedef for a Most-Recently-Used list of Data objects.

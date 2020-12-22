@@ -431,8 +431,8 @@ EventList &EventList::operator+=(const WeightedEvent &event) {
  * @param more_events :: A vector of events to append.
  * @return reference to this
  * */
-EventList &EventList::
-operator+=(const std::vector<WeightedEvent> &more_events) {
+EventList &
+EventList::operator+=(const std::vector<WeightedEvent> &more_events) {
   switch (this->eventType) {
   case TOF:
     // Need to switch to weighted
@@ -468,8 +468,8 @@ operator+=(const std::vector<WeightedEvent> &more_events) {
  * @param more_events :: A vector of events to append.
  * @return reference to this
  * */
-EventList &EventList::
-operator+=(const std::vector<WeightedEventNoTime> &more_events) {
+EventList &
+EventList::operator+=(const std::vector<WeightedEventNoTime> &more_events) {
   switch (this->eventType) {
   case TOF:
   case WEIGHTED:
@@ -1267,7 +1267,7 @@ size_t EventList::histogram_size() const {
  * view. This will NOT cause the histogram to be calculated.
  * @param X :: The vector of doubles to set as the histogram limits.
  */
-void EventList::setX(const Kernel::cow_ptr<HistogramData::HistogramX> &X) {
+void EventList::setX(const std::shared_ptr<HistogramData::HistogramX> &X) {
   m_histogram.setX(X);
   if (mru)
     mru->deleteIndex(this);
@@ -1290,7 +1290,7 @@ const MantidVec &EventList::dataX() const { return m_histogram.dataX(); }
 const MantidVec &EventList::readX() const { return m_histogram.readX(); }
 
 /// Deprecated, use sharedX() instead. Returns a pointer to the x data
-Kernel::cow_ptr<HistogramData::HistogramX> EventList::ptrX() const {
+std::shared_ptr<HistogramData::HistogramX> EventList::ptrX() const {
   return m_histogram.ptrX();
 }
 
@@ -1376,11 +1376,11 @@ const HistogramData::HistogramE &EventList::e() const {
 
   return *sharedE();
 }
-Kernel::cow_ptr<HistogramData::HistogramY> EventList::sharedY() const {
+std::shared_ptr<HistogramData::HistogramY> EventList::sharedY() const {
   // This is the thread number from which this function was called.
   int thread = PARALLEL_THREAD_NUMBER;
 
-  Kernel::cow_ptr<HistogramData::HistogramY> yData(nullptr);
+  std::shared_ptr<HistogramData::HistogramY> yData(nullptr);
 
   // Is the data in the mrulist?
   if (mru) {
@@ -1406,11 +1406,11 @@ Kernel::cow_ptr<HistogramData::HistogramY> EventList::sharedY() const {
   }
   return yData;
 }
-Kernel::cow_ptr<HistogramData::HistogramE> EventList::sharedE() const {
+std::shared_ptr<HistogramData::HistogramE> EventList::sharedE() const {
   // This is the thread number from which this function was called.
   int thread = PARALLEL_THREAD_NUMBER;
 
-  Kernel::cow_ptr<HistogramData::HistogramE> eData(nullptr);
+  std::shared_ptr<HistogramData::HistogramE> eData(nullptr);
 
   // Is the data in the mrulist?
   if (mru) {

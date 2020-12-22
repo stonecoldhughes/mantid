@@ -114,7 +114,7 @@ public:
   const MantidVec &dataY(const std::size_t) const override;
   const MantidVec &dataE(const std::size_t) const override;
   const MantidVec &dataDx(const std::size_t) const override;
-  Kernel::cow_ptr<HistogramData::HistogramX>
+  std::shared_ptr<HistogramData::HistogramX>
   refX(const std::size_t) const override;
 
   /// Generate a new histogram from specified event list at the given index.

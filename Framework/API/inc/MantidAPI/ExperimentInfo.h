@@ -92,8 +92,8 @@ public:
   const Run &run() const;
   /// Writable version of the run object
   Run &mutableRun();
-  void setSharedRun(Kernel::cow_ptr<Run> run);
-  Kernel::cow_ptr<Run> sharedRun();
+  void setSharedRun(std::shared_ptr<Run> run);
+  std::shared_ptr<Run> sharedRun();
 
   /// Access a log for this experiment.
   Kernel::Property *getLog(const std::string &log) const;
@@ -165,7 +165,7 @@ protected:
   virtual void populateIfNotLoaded() const;
 
   void setSpectrumDefinitions(
-      Kernel::cow_ptr<std::vector<SpectrumDefinition>> spectrumDefinitions);
+      std::shared_ptr<std::vector<SpectrumDefinition>> spectrumDefinitions);
 
   virtual void updateCachedDetectorGrouping(const size_t index) const;
   /// Parameters modifying the base instrument
@@ -197,9 +197,9 @@ private:
   std::string loadInstrumentXML(const std::string &filename);
 
   /// The information on the sample environment
-  Kernel::cow_ptr<Sample> m_sample;
+  std::shared_ptr<Sample> m_sample;
   /// The run information
-  Kernel::cow_ptr<Run> m_run;
+  std::shared_ptr<Run> m_run;
 
   /// Detector grouping information
   mutable std::unordered_map<detid_t, size_t> m_det2group;

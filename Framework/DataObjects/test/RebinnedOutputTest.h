@@ -64,7 +64,7 @@ public:
 
   void testSetF() {
     MantidVecPtr f;
-    f.access().resize(nHist, 2.0);
+    f->resize(nHist, 2.0);
     ws->setF(1, f);
     TS_ASSERT_EQUALS(ws->dataF(1)[3], 2.);
   }

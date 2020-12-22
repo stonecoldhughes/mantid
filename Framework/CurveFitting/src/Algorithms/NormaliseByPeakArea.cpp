@@ -300,8 +300,8 @@ void NormaliseByPeakArea::normaliseTOFData(const double area,
  */
 void NormaliseByPeakArea::saveToOutput(
     const API::MatrixWorkspace_sptr &accumWS,
-    const Kernel::cow_ptr<HistogramData::HistogramY> &yValues,
-    const Kernel::cow_ptr<HistogramData::HistogramE> &eValues,
+    const std::shared_ptr<HistogramData::HistogramY> &yValues,
+    const std::shared_ptr<HistogramData::HistogramE> &eValues,
     const size_t index) {
   assert(yValues->rawData().size() == eValues->rawData().size());
 

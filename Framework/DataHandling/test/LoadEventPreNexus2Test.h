@@ -210,7 +210,7 @@ public:
                       inputWS->getSpectrum(wkspIndex).getEvents()[0].tof());
 
     // Setting X should still be possible
-    Kernel::cow_ptr<HistogramX> x;
+    std::shared_ptr<HistogramX> x;
     TS_ASSERT_THROWS_NOTHING(outputWS->setX(0, x));
     // Accessing Y is still possible
     static_cast<void>(outputWS->y(0));

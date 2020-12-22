@@ -55,7 +55,7 @@ void Histogram1D::clearData() {
 
 /// Deprecated, use setSharedX() instead. Sets the x data.
 /// @param X :: vector of X data
-void Histogram1D::setX(const Kernel::cow_ptr<HistogramData::HistogramX> &X) {
+void Histogram1D::setX(const std::shared_ptr<HistogramData::HistogramX> &X) {
   m_histogram.setX(X);
 }
 
@@ -69,7 +69,7 @@ const MantidVec &Histogram1D::dataX() const { return m_histogram.dataX(); }
 const MantidVec &Histogram1D::readX() const { return m_histogram.readX(); }
 
 /// Deprecated, use sharedX() instead. Returns a pointer to the x data
-Kernel::cow_ptr<HistogramData::HistogramX> Histogram1D::ptrX() const {
+std::shared_ptr<HistogramData::HistogramX> Histogram1D::ptrX() const {
   return m_histogram.ptrX();
 }
 

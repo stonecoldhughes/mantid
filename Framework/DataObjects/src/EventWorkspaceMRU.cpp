@@ -89,7 +89,7 @@ void EventWorkspaceMRU::clear() {
  * @param index :: index of the data to return
  * @return pointer to the TypeWithMarker that has the data; NULL if not found.
  */
-Kernel::cow_ptr<HistogramData::HistogramY>
+std::shared_ptr<HistogramData::HistogramY>
 EventWorkspaceMRU::findY(size_t thread_num, const EventList *index) {
   Poco::ScopedReadRWLock _lock(m_changeMruListsMutexY);
   auto result = m_bufferedDataY[thread_num]->find(
@@ -105,7 +105,7 @@ EventWorkspaceMRU::findY(size_t thread_num, const EventList *index) {
  * @param index :: index of the data to return
  * @return pointer to the TypeWithMarker that has the data; NULL if not found.
  */
-Kernel::cow_ptr<HistogramData::HistogramE>
+std::shared_ptr<HistogramData::HistogramE>
 EventWorkspaceMRU::findE(size_t thread_num, const EventList *index) {
   Poco::ScopedReadRWLock _lock(m_changeMruListsMutexE);
   auto result = m_bufferedDataE[thread_num]->find(

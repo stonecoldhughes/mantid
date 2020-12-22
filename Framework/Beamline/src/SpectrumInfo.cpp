@@ -16,7 +16,7 @@ SpectrumInfo::SpectrumInfo(const size_t numberOfDetectors)
           numberOfDetectors)) {}
 
 SpectrumInfo::SpectrumInfo(
-    Kernel::cow_ptr<std::vector<SpectrumDefinition>> spectrumDefinition)
+    std::shared_ptr<std::vector<SpectrumDefinition>> spectrumDefinition)
     : m_spectrumDefinition(std::move(spectrumDefinition)) {}
 
 /// Returns the size of the SpectrumInfo, i.e., the number of spectra.
@@ -44,10 +44,10 @@ SpectrumInfo::spectrumDefinition(const size_t index) const {
 /// Sets the SpectrumDefinition of the spectrum.
 void SpectrumInfo::setSpectrumDefinition(const size_t index,
                                          SpectrumDefinition def) {
-  m_spectrumDefinition.access()[index] = std::move(def);
+  (*m_spectrumDefinition)[index] = std::move(def);
 }
 
-const Kernel::cow_ptr<std::vector<SpectrumDefinition>> &
+const std::shared_ptr<std::vector<SpectrumDefinition>> &
 SpectrumInfo::sharedSpectrumDefinitions() const {
   return m_spectrumDefinition;
 }

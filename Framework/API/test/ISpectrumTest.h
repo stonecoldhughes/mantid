@@ -106,7 +106,7 @@ public:
 
     // setDX version 3
     SpectrumTester s5(Histogram::XMode::Points, Histogram::YMode::Counts);
-    cow_ptr<Mantid::HistogramData::HistogramDx> Dx_vec_ptr;
+    std::shared_ptr<Mantid::HistogramData::HistogramDx> Dx_vec_ptr;
     s5.setSharedDx(Dx_vec_ptr);
     TS_ASSERT(s5.hasDx());
   }

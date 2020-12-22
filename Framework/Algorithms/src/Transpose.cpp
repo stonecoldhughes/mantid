@@ -68,8 +68,8 @@ void Transpose::exec() {
     auto &outE = outputWorkspace->mutableE(i);
 
     // because setF wants a COW pointer
-    Kernel::cow_ptr<std::vector<double>> F;
-    std::vector<double> &outF = F.access();
+    std::shared_ptr<std::vector<double>> F;
+    std::vector<double> &outF = *F;
 
     if (outRebinWorkspace) {
       outF.resize(newYsize);

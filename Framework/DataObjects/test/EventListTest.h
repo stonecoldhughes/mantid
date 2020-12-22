@@ -386,7 +386,7 @@ public:
   //==================================================================================
 
   /// Make a big bin holding all events
-  cow_ptr<HistogramX> one_big_bin() {
+  std::shared_ptr<HistogramX> one_big_bin() {
     return make_cow<HistogramX>(std::initializer_list<double>{0, 1e10});
   }
 

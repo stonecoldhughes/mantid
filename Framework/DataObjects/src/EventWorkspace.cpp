@@ -591,7 +591,7 @@ const MantidVec &EventWorkspace::dataE(const std::size_t index) const {
 /** Deprecated, use sharedX() instead.
  * @return a pointer to the X data vector at a given workspace index
  * @param index :: workspace index   */
-Kernel::cow_ptr<HistogramData::HistogramX>
+std::shared_ptr<HistogramData::HistogramX>
 EventWorkspace::refX(const std::size_t index) const {
   return getSpectrum(index).ptrX();
 }

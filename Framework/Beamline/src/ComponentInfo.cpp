@@ -285,7 +285,7 @@ void ComponentInfo::doSetPosition(const std::pair<size_t, size_t> &index,
 
   for (const auto &subIndex : componentRangeInSubtree(componentIndex)) {
     size_t offsetIndex = compOffsetIndex(subIndex);
-    m_positions.access()[offsetIndex] += offset;
+    (*m_positions)[offsetIndex] += offset;
   }
 }
 
@@ -314,9 +314,8 @@ void ComponentInfo::doSetRotation(const std::pair<size_t, size_t> &index,
     auto newPos = transform * (oldPos - compPos) + compPos;
     auto newRot = rotDelta * rotation({subCompIndex, timeIndex});
     const size_t childCompIndexOffset = compOffsetIndex(subCompIndex);
-    m_positions.access()[linearIndex({childCompIndexOffset, timeIndex})] =
-        newPos;
-    m_rotations.access()[linearIndex({childCompIndexOffset, timeIndex})] =
+    (*m_positions)[linearIndex({childCompIndexOffset, timeIndex})] = newPos;
+    (*m_rotations)[linearIndex({childCompIndexOffset, timeIndex})] =
         newRot.normalized();
   }
 }
@@ -440,8 +439,8 @@ void ComponentInfo::initIndices() {
   checkNoTimeDependence();
   m_indexMap = Kernel::make_cow<std::vector<std::vector<size_t>>>();
   m_indices = Kernel::make_cow<std::vector<std::pair<size_t, size_t>>>();
-  auto &indexMap = m_indexMap.access();
-  auto &indices = m_indices.access();
+  auto &indexMap = *m_indexMap;
+  auto &indices = *m_indices;
   indexMap.reserve(nonDetectorSize());
   indices.reserve(nonDetectorSize());
   // No time dependence, so both the component index and the linear index are i.
@@ -561,7 +560,7 @@ size_t ComponentInfo::indexOfAny(const std::string &name) const {
 
 void ComponentInfo::setScaleFactor(const size_t componentIndex,
                                    const Eigen::Vector3d &scaleFactor) {
-  m_scaleFactors.access()[componentIndex] = scaleFactor;
+  (*m_scaleFactors)[componentIndex] = scaleFactor;
 }
 
 ComponentType ComponentInfo::componentType(const size_t componentIndex) const {
@@ -642,8 +641,8 @@ void ComponentInfo::merge(const ComponentInfo &other) {
        ++timeIndex) {
     if (!toMerge[timeIndex])
       continue;
-    auto &positions = m_positions.access();
-    auto &rotations = m_rotations.access();
+    auto &positions = *m_positions;
+    auto &rotations = *m_rotations;
     m_scanIntervals.emplace_back(other.m_scanIntervals[timeIndex]);
     const size_t indexStart = other.linearIndex({0, timeIndex});
     size_t indexEnd = indexStart + nonDetectorSize();

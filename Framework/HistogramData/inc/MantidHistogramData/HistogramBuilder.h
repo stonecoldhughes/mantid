@@ -44,10 +44,10 @@ public:
 
 private:
   bool m_isDistribution{false};
-  Kernel::cow_ptr<HistogramX> m_x{nullptr};
-  Kernel::cow_ptr<HistogramY> m_y{nullptr};
-  Kernel::cow_ptr<HistogramE> m_e{nullptr};
-  Kernel::cow_ptr<HistogramDx> d_x{nullptr};
+  std::shared_ptr<HistogramX> m_x{nullptr};
+  std::shared_ptr<HistogramY> m_y{nullptr};
+  std::shared_ptr<HistogramE> m_e{nullptr};
+  std::shared_ptr<HistogramDx> d_x{nullptr};
 };
 
 } // namespace HistogramData

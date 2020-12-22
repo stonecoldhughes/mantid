@@ -44,7 +44,7 @@ SpectrumInfo::spectrumDefinition(const size_t index) const {
   return m_spectrumInfo.spectrumDefinition(index);
 }
 
-const Kernel::cow_ptr<std::vector<SpectrumDefinition>> &
+const std::shared_ptr<std::vector<SpectrumDefinition>> &
 SpectrumInfo::sharedSpectrumDefinitions() const {
   for (size_t i = 0; i < size(); ++i)
     m_experimentInfo.updateSpectrumDefinitionIfNecessary(i);

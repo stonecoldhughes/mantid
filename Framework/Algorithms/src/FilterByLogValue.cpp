@@ -202,7 +202,7 @@ void FilterByLogValue::exec() {
     // To split/filter the runs, first you make a vector with just the one
     // output run
     auto newRun = Kernel::make_cow<Run>(inputWS->run());
-    std::vector<LogManager *> splitRuns = {&newRun.access()};
+    std::vector<LogManager *> splitRuns = {&(*newRun)};
     inputWS->run().splitByTime(splitter, splitRuns);
     // Set the output back in the input
     inputWS->setSharedRun(newRun);

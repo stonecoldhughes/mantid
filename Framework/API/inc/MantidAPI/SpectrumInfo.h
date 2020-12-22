@@ -59,7 +59,7 @@ public:
   size_t detectorCount() const;
 
   const SpectrumDefinition &spectrumDefinition(const size_t index) const;
-  const Kernel::cow_ptr<std::vector<SpectrumDefinition>> &
+  const std::shared_ptr<std::vector<SpectrumDefinition>> &
   sharedSpectrumDefinitions() const;
 
   bool isMonitor(const size_t index) const;

@@ -39,7 +39,7 @@ DetectorInfo::DetectorInfo(
     const std::vector<size_t> &monitorIndices)
     : DetectorInfo(std::move(positions), std::move(rotations)) {
   for (const auto i : monitorIndices)
-    m_isMonitor.access().at(i) = true;
+    m_isMonitor->at(i) = true;
 }
 
 /** Returns true if the content of this is equivalent to the content of other.
@@ -137,13 +137,13 @@ bool DetectorInfo::isMasked(const std::pair<size_t, size_t> &index) const {
  * Throws if there are time-dependent detectors. */
 void DetectorInfo::setMasked(const size_t index, bool masked) {
   checkNoTimeDependence();
-  m_isMasked.access()[index] = masked;
+  (*m_isMasked)[index] = masked;
 }
 
 /// Set the mask flag of the detector with given index. Not thread safe.
 void DetectorInfo::setMasked(const std::pair<size_t, size_t> &index,
                              bool masked) {
-  m_isMasked.access()[linearIndex(index)] = masked;
+  (*m_isMasked)[linearIndex(index)] = masked;
 }
 
 /// Returns the scan count of the detector, reading it from m_componentInfo
@@ -194,9 +194,9 @@ void DetectorInfo::merge(const DetectorInfo &other,
   for (size_t timeIndex = 0; timeIndex < other.scanCount(); ++timeIndex) {
     if (!merge[timeIndex])
       continue;
-    auto &isMasked = m_isMasked.access();
-    auto &positions = m_positions.access();
-    auto &rotations = m_rotations.access();
+    auto &isMasked = *m_isMasked;
+    auto &positions = *m_positions;
+    auto &rotations = *m_rotations;
     const size_t indexStart = other.linearIndex({0, timeIndex});
     size_t indexEnd = indexStart + size();
     isMasked.insert(isMasked.end(), other.m_isMasked->begin() + indexStart,

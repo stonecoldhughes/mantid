@@ -36,12 +36,12 @@ private:
       m_componentRanges;
   std::shared_ptr<const std::vector<size_t>> m_parentIndices;
   std::shared_ptr<std::vector<std::vector<size_t>>> m_children;
-  Mantid::Kernel::cow_ptr<std::vector<Eigen::Vector3d>> m_positions;
-  Mantid::Kernel::cow_ptr<std::vector<
-      Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>
+  std::shared_ptr<std::vector<Eigen::Vector3d>> m_positions;
+  std::shared_ptr<std::vector<Eigen::Quaterniond,
+                              Eigen::aligned_allocator<Eigen::Quaterniond>>>
       m_rotations;
-  Mantid::Kernel::cow_ptr<std::vector<Eigen::Vector3d>> m_scaleFactors;
-  Mantid::Kernel::cow_ptr<std::vector<ComponentType>> m_componentType;
+  std::shared_ptr<std::vector<Eigen::Vector3d>> m_scaleFactors;
+  std::shared_ptr<std::vector<ComponentType>> m_componentType;
   std::shared_ptr<const std::vector<std::string>> m_names;
 
   const size_t m_size = 0;
@@ -51,9 +51,9 @@ private:
   /// The default initialisation is a single interval, i.e. no scan
   std::vector<std::pair<int64_t, int64_t>> m_scanIntervals{{0, 1}};
   /// For (component index, time index) -> linear index conversions
-  Kernel::cow_ptr<std::vector<std::vector<size_t>>> m_indexMap{nullptr};
+  std::shared_ptr<std::vector<std::vector<size_t>>> m_indexMap{nullptr};
   /// For linear index -> (detector index, time index) conversions
-  Kernel::cow_ptr<std::vector<std::pair<size_t, size_t>>> m_indices{nullptr};
+  std::shared_ptr<std::vector<std::pair<size_t, size_t>>> m_indices{nullptr};
   void failIfDetectorInfoScanning() const;
   size_t linearIndex(const std::pair<size_t, size_t> &index) const;
   void initScanIntervals();

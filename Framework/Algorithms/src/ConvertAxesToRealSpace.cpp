@@ -194,7 +194,7 @@ void ConvertAxesToRealSpace::exec() {
       std::dynamic_pointer_cast<Units::Label>(xUnit);
   xlabel->setLabel(axisVector[0].label, m_unitMap[axisVector[0].label]);
 
-  MantidVec &yRef = y.access();
+  MantidVec &yRef = *y;
   yRef.resize(axisVector[1].bins);
   fillAxisValues(yRef, axisVector[1], false);
 

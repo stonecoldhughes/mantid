@@ -72,7 +72,7 @@ public:
         DataObjects::create<DataObjects::Workspace2D>(1, std::move(h));
     auto Dxs = Kernel::make_cow<HistogramData::HistogramDx>(2);
     {
-      auto &DxData = Dxs.access();
+      auto &DxData = *Dxs;
       DxData.front() = 1.2;
       DxData.back() = 1.7;
     }
@@ -109,7 +109,7 @@ public:
         DataObjects::create<DataObjects::Workspace2D>(1, std::move(h));
     auto Dxs = Kernel::make_cow<HistogramData::HistogramDx>(2);
     {
-      auto &DxData = Dxs.access();
+      auto &DxData = *Dxs;
       DxData.front() = 0.1;
       DxData.back() = 0.3;
     }
@@ -148,7 +148,7 @@ public:
         DataObjects::create<DataObjects::Workspace2D>(1, std::move(h));
     auto Dxs = Kernel::make_cow<HistogramData::HistogramDx>(4);
     {
-      auto &DxData = Dxs.access();
+      auto &DxData = *Dxs;
       DxData = {1., 0.1, 2., 0.2};
     }
     inputWS->setSharedDx(0, std::move(Dxs));

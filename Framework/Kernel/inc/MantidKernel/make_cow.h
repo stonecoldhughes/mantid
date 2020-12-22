@@ -6,7 +6,6 @@
 // SPDX - License - Identifier: GPL - 3.0 +
 #pragma once
 
-#include "MantidKernel/cow_ptr.h"
 #include <memory>
 
 /*
@@ -17,8 +16,9 @@ namespace Mantid {
 
 namespace Kernel {
 
-template <class T, class... Args> inline cow_ptr<T> make_cow(Args &&... args) {
-  return cow_ptr<T>(std::make_shared<T>(std::forward<Args>(args)...));
+template <class T, class... Args>
+inline std::shared_ptr<T> make_cow(Args &&... args) {
+  return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
 } // namespace Kernel

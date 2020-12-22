@@ -133,7 +133,7 @@ FrequencyStandardDeviations Histogram::frequencyStandardDeviations() const {
 /** Sets the internal x-data pointer of the Histogram.
 
   Throws if the size does not match the current size. */
-void Histogram::setSharedX(const Kernel::cow_ptr<HistogramX> &x) & {
+void Histogram::setSharedX(const std::shared_ptr<HistogramX> &x) & {
   if (m_x->size() != x->size())
     throw std::logic_error("Histogram::setSharedX: size mismatch\n");
   m_x = x;
@@ -142,7 +142,7 @@ void Histogram::setSharedX(const Kernel::cow_ptr<HistogramX> &x) & {
 /** Sets the internal y-data pointer of the Histogram.
 
   Throws if the size does not match the current size. */
-void Histogram::setSharedY(const Kernel::cow_ptr<HistogramY> &y) & {
+void Histogram::setSharedY(const std::shared_ptr<HistogramY> &y) & {
   if (yMode() == YMode::Uninitialized)
     throw std::logic_error(
         "Histogram::setSharedY: YMode is not set and cannot be determined");
@@ -154,7 +154,7 @@ void Histogram::setSharedY(const Kernel::cow_ptr<HistogramY> &y) & {
 /** Sets the internal e-data pointer of the Histogram.
 
   Throws if the size does not match the current size. */
-void Histogram::setSharedE(const Kernel::cow_ptr<HistogramE> &e) & {
+void Histogram::setSharedE(const std::shared_ptr<HistogramE> &e) & {
   if (e)
     checkSize(*e);
   m_e = e;
@@ -163,7 +163,7 @@ void Histogram::setSharedE(const Kernel::cow_ptr<HistogramE> &e) & {
 /** Sets the internal dx-data pointer of the Histogram.
 
   Throws if the size does not match the current size. */
-void Histogram::setSharedDx(const Kernel::cow_ptr<HistogramDx> &Dx) & {
+void Histogram::setSharedDx(const std::shared_ptr<HistogramDx> &Dx) & {
   // Setting a NULL Dx is fine, this disables x errors.
   // Note that we compare with m_x -- m_dx might be NULL.
   PointStandardDeviations points(Dx);
@@ -277,17 +277,17 @@ template <> void Histogram::checkSize(const BinEdges &binEdges) const {
 void Histogram::resize(size_t n) {
   auto newXSize = (xMode() == XMode::Points || n == 0) ? n : n + 1;
 
-  m_x.access().mutableRawData().resize(newXSize);
+  m_x->mutableRawData().resize(newXSize);
   if (m_y) {
-    m_y.access().mutableRawData().resize(n);
+    m_y->mutableRawData().resize(n);
   }
 
   if (m_e) {
-    m_e.access().mutableRawData().resize(n);
+    m_e->mutableRawData().resize(n);
   }
 
   if (m_dx) {
-    m_dx.access().mutableRawData().resize(n);
+    m_dx->mutableRawData().resize(n);
   }
 }
 

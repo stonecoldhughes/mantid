@@ -52,11 +52,11 @@ class HistogramIterator;
 */
 class MANTID_HISTOGRAMDATA_DLL Histogram {
 private:
-  Kernel::cow_ptr<HistogramX> m_x;
-  Kernel::cow_ptr<HistogramY> m_y{nullptr};
-  Kernel::cow_ptr<HistogramE> m_e{nullptr};
+  std::shared_ptr<HistogramX> m_x;
+  std::shared_ptr<HistogramY> m_y{nullptr};
+  std::shared_ptr<HistogramE> m_e{nullptr};
   // Mutable until Dx legacy interface is removed.
-  mutable Kernel::cow_ptr<HistogramDx> m_dx{nullptr};
+  mutable std::shared_ptr<HistogramDx> m_dx{nullptr};
 
 public:
   enum class XMode { BinEdges, Points };
@@ -109,19 +109,19 @@ public:
   const HistogramY &y() const { return *m_y; }
   const HistogramE &e() const { return *m_e; }
   const HistogramDx &dx() const { return *m_dx; }
-  HistogramX &mutableX() & { return m_x.access(); }
-  HistogramY &mutableY() & { return m_y.access(); }
-  HistogramE &mutableE() & { return m_e.access(); }
-  HistogramDx &mutableDx() & { return m_dx.access(); }
+  HistogramX &mutableX() & { return *m_x; }
+  HistogramY &mutableY() & { return *m_y; }
+  HistogramE &mutableE() & { return *m_e; }
+  HistogramDx &mutableDx() & { return *m_dx; }
 
-  Kernel::cow_ptr<HistogramX> sharedX() const { return m_x; }
-  Kernel::cow_ptr<HistogramY> sharedY() const { return m_y; }
-  Kernel::cow_ptr<HistogramE> sharedE() const { return m_e; }
-  Kernel::cow_ptr<HistogramDx> sharedDx() const { return m_dx; }
-  void setSharedX(const Kernel::cow_ptr<HistogramX> &x) &;
-  void setSharedY(const Kernel::cow_ptr<HistogramY> &y) &;
-  void setSharedE(const Kernel::cow_ptr<HistogramE> &e) &;
-  void setSharedDx(const Kernel::cow_ptr<HistogramDx> &Dx) &;
+  std::shared_ptr<HistogramX> sharedX() const { return m_x; }
+  std::shared_ptr<HistogramY> sharedY() const { return m_y; }
+  std::shared_ptr<HistogramE> sharedE() const { return m_e; }
+  std::shared_ptr<HistogramDx> sharedDx() const { return m_dx; }
+  void setSharedX(const std::shared_ptr<HistogramX> &x) &;
+  void setSharedY(const std::shared_ptr<HistogramY> &y) &;
+  void setSharedE(const std::shared_ptr<HistogramE> &e) &;
+  void setSharedDx(const std::shared_ptr<HistogramDx> &Dx) &;
 
   /// Returns the size of the histogram, i.e., the number of Y data points.
   size_t size() const {
@@ -133,32 +133,32 @@ public:
   void resize(size_t n);
 
   // Temporary legacy interface to X
-  void setX(const Kernel::cow_ptr<HistogramX> &X) & { m_x = X; }
-  MantidVec &dataX() & { return m_x.access().mutableRawData(); }
+  void setX(const std::shared_ptr<HistogramX> &X) & { m_x = X; }
+  MantidVec &dataX() & { return m_x->mutableRawData(); }
   const MantidVec &dataX() const & { return m_x->rawData(); }
   const MantidVec &readX() const { return m_x->rawData(); }
-  Kernel::cow_ptr<HistogramX> ptrX() const { return m_x; }
+  std::shared_ptr<HistogramX> ptrX() const { return m_x; }
 
   // Temporary legacy interface to Y
-  void setY(const Kernel::cow_ptr<HistogramY> &Y) & { m_y = Y; }
-  MantidVec &dataY() & { return m_y.access().mutableRawData(); }
+  void setY(const std::shared_ptr<HistogramY> &Y) & { m_y = Y; }
+  MantidVec &dataY() & { return m_y->mutableRawData(); }
   const MantidVec &dataY() const & { return m_y->rawData(); }
   const MantidVec &readY() const { return m_y->rawData(); }
-  Kernel::cow_ptr<HistogramY> ptrY() const { return m_y; }
+  std::shared_ptr<HistogramY> ptrY() const { return m_y; }
 
   // Temporary legacy interface to E
-  void setE(const Kernel::cow_ptr<HistogramE> &E) & { m_e = E; }
-  MantidVec &dataE() & { return m_e.access().mutableRawData(); }
+  void setE(const std::shared_ptr<HistogramE> &E) & { m_e = E; }
+  MantidVec &dataE() & { return m_e->mutableRawData(); }
   const MantidVec &dataE() const & { return m_e->rawData(); }
   const MantidVec &readE() const { return m_e->rawData(); }
-  Kernel::cow_ptr<HistogramE> ptrE() const { return m_e; }
+  std::shared_ptr<HistogramE> ptrE() const { return m_e; }
 
   // Temporary legacy interface to Dx. Note that accessors mimic the current
   // behavior which always has Dx allocated.
   MantidVec &dataDx() & {
     if (!m_dx)
       m_dx = Kernel::make_cow<HistogramDx>(size(), 0.0);
-    return m_dx.access().mutableRawData();
+    return m_dx->mutableRawData();
   }
   const MantidVec &dataDx() const & {
     if (!m_dx)

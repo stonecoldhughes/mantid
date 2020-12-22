@@ -168,11 +168,11 @@ public:
   EventSortType getSortType() const;
 
   // X-vector accessors. These reset the MRU for this spectrum
-  void setX(const Kernel::cow_ptr<HistogramData::HistogramX> &X) override;
+  void setX(const std::shared_ptr<HistogramData::HistogramX> &X) override;
   MantidVec &dataX() override;
   const MantidVec &dataX() const override;
   const MantidVec &readX() const override;
-  Kernel::cow_ptr<HistogramData::HistogramX> ptrX() const override;
+  std::shared_ptr<HistogramData::HistogramX> ptrX() const override;
 
   MantidVec &dataDx() override;
   const MantidVec &dataDx() const override;
@@ -342,8 +342,8 @@ public:
   frequencyStandardDeviations() const override;
   const HistogramData::HistogramY &y() const override;
   const HistogramData::HistogramE &e() const override;
-  Kernel::cow_ptr<HistogramData::HistogramY> sharedY() const override;
-  Kernel::cow_ptr<HistogramData::HistogramE> sharedE() const override;
+  std::shared_ptr<HistogramData::HistogramY> sharedY() const override;
+  std::shared_ptr<HistogramData::HistogramE> sharedE() const override;
 
   void generateCountsHistogramPulseTime(
       const double &xMin, const double &xMax, MantidVec &Y,

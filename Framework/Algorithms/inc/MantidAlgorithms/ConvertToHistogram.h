@@ -44,8 +44,8 @@ private:
   /// Returns the size of the new X vector
   std::size_t getNewXSize(const std::size_t ySize) const override;
   /// Calculate the X point values. Implement in an inheriting class.
-  Kernel::cow_ptr<HistogramData::HistogramX> calculateXPoints(
-      Kernel::cow_ptr<HistogramData::HistogramX> inputX) const override;
+  std::shared_ptr<HistogramData::HistogramX> calculateXPoints(
+      std::shared_ptr<HistogramData::HistogramX> inputX) const override;
 };
 
 } // namespace Algorithms

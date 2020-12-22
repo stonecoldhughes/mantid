@@ -56,8 +56,8 @@ size_t ConvertToHistogram::getNewXSize(const std::size_t ySize) const {
  * are guessed such that the boundary goes mid-way between each point
  * @param inputX :: A const reference to the input data
  */
-Kernel::cow_ptr<HistogramData::HistogramX> ConvertToHistogram::calculateXPoints(
-    Kernel::cow_ptr<HistogramData::HistogramX> inputX) const {
+std::shared_ptr<HistogramData::HistogramX> ConvertToHistogram::calculateXPoints(
+    std::shared_ptr<HistogramData::HistogramX> inputX) const {
   return HistogramData::BinEdges(HistogramData::Points(std::move(inputX)))
       .cowData();
 }

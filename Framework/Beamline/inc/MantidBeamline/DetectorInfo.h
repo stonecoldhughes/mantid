@@ -103,10 +103,10 @@ private:
   void checkSizes(const DetectorInfo &other) const;
   void merge(const DetectorInfo &other, const std::vector<bool> &merge);
 
-  Kernel::cow_ptr<std::vector<bool>> m_isMonitor{nullptr};
-  Kernel::cow_ptr<std::vector<bool>> m_isMasked{nullptr};
-  Kernel::cow_ptr<std::vector<Eigen::Vector3d>> m_positions{nullptr};
-  Kernel::cow_ptr<std::vector<Eigen::Quaterniond,
+  std::shared_ptr<std::vector<bool>> m_isMonitor{nullptr};
+  std::shared_ptr<std::vector<bool>> m_isMasked{nullptr};
+  std::shared_ptr<std::vector<Eigen::Vector3d>> m_positions{nullptr};
+  std::shared_ptr<std::vector<Eigen::Quaterniond,
                               Eigen::aligned_allocator<Eigen::Quaterniond>>>
       m_rotations{nullptr};
 
@@ -168,13 +168,13 @@ DetectorInfo::rotation(const std::pair<size_t, size_t> &index) const {
 inline void DetectorInfo::setPosition(const size_t index,
                                       const Eigen::Vector3d &position) {
   checkNoTimeDependence();
-  m_positions.access()[index] = position;
+  (*m_positions)[index] = position;
 }
 
 /// Set the position of the detector with given index.
 inline void DetectorInfo::setPosition(const std::pair<size_t, size_t> &index,
                                       const Eigen::Vector3d &position) {
-  m_positions.access()[linearIndex(index)] = position;
+  (*m_positions)[linearIndex(index)] = position;
 }
 
 /** Set the rotation of the detector with given detector index.
@@ -184,13 +184,13 @@ inline void DetectorInfo::setPosition(const std::pair<size_t, size_t> &index,
 inline void DetectorInfo::setRotation(const size_t index,
                                       const Eigen::Quaterniond &rotation) {
   checkNoTimeDependence();
-  m_rotations.access()[index] = rotation.normalized();
+  (*m_rotations)[index] = rotation.normalized();
 }
 
 /// Set the rotation of the detector with given index.
 inline void DetectorInfo::setRotation(const std::pair<size_t, size_t> &index,
                                       const Eigen::Quaterniond &rotation) {
-  m_rotations.access()[linearIndex(index)] = rotation.normalized();
+  (*m_rotations)[linearIndex(index)] = rotation.normalized();
 }
 
 /// Throws if this has time-dependent data.

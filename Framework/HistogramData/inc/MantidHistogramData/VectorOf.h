@@ -72,22 +72,14 @@ public:
   VectorOf(size_t count, const Generator &g)
       : m_data(Kernel::make_cow<CowType>(count, g)) {}
 
-  /// Copy construct from cow_ptr. Lightweight, stored object will be shared.
-  explicit VectorOf(const Kernel::cow_ptr<CowType> &other) : m_data(other) {}
   /// Copy construct from shared_ptr. Lightweight, stored object will be shared.
   explicit VectorOf(const std::shared_ptr<CowType> &other) : m_data(other) {}
-  /// Copy construct stored object from data.
   explicit VectorOf(const CowType &data)
       : m_data(Kernel::make_cow<CowType>(data)) {}
   /// Move construct stored object from data.
   explicit VectorOf(CowType &&data)
       : m_data(Kernel::make_cow<CowType>(std::move(data))) {}
 
-  /// Copy assignment from cow_ptr. Lightweight, stored object will be shared.
-  VectorOf &operator=(const Kernel::cow_ptr<CowType> &other) & {
-    m_data = other;
-    return *this;
-  }
   /// Copy assignment from shared_ptr. Lightweight, stored object will be
   /// shared.
   VectorOf &operator=(const std::shared_ptr<CowType> &other) & {
@@ -137,24 +129,22 @@ public:
   const CowType &data() const { return *m_data; }
   /// Returns a reference to the stored object. The behavior is undefined if the
   /// stored pointer is null.
-  CowType &mutableData() & { return m_data.access(); }
+  CowType &mutableData() & { return *m_data; }
   /// Returns a copy-on-write pointer to the stored object.
-  Kernel::cow_ptr<CowType> cowData() const { return m_data; }
+  std::shared_ptr<CowType> cowData() const { return m_data; }
   /// Returns a const reference to the internal data structure of the stored
   /// object. The behavior is undefined if the stored pointer is null.
   const std::vector<double> &rawData() const { return m_data->rawData(); }
   /// Returns a reference to the internal data structure of the stored object.
   /// The behavior is undefined if the stored pointer is null.
-  std::vector<double> &mutableRawData() & {
-    return m_data.access().mutableRawData();
-  }
+  std::vector<double> &mutableRawData() & { return m_data->mutableRawData(); }
 
 protected:
   // This is used as base class only, cannot delete polymorphically, so
   // destructor is protected.
   ~VectorOf() = default;
 
-  Kernel::cow_ptr<CowType> m_data{nullptr};
+  std::shared_ptr<CowType> m_data{nullptr};
 };
 
 } // namespace detail

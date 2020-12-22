@@ -47,7 +47,7 @@ Histogram data in Mantid is stored in a number of different ways that reflect th
 The new histogram type described below is designed to follow the needs of the current way Mantid deals with histograms (the following description is mainly for x-data, but the same applies to y-data):
 
 1. Some algorithms work with bin edges, some with points, and many do not care.
-2. We need to share data, e.g., when the bin edges of all histograms in a workspace are identical. This is currently handled in ``ISpectrum``, ``Histogram1D``, and ``EventList``, which store a copy-on-write pointer (``Kernel::cow_ptr``) to a ``std::vector<double>``.
+2. We need to share data, e.g., when the bin edges of all histograms in a workspace are identical. This is currently handled in ``ISpectrum``, ``Histogram1D``, and ``EventList``, which store a copy-on-write pointer (``std::shared_ptr``) to a ``std::vector<double>``.
 
 Mantid developers are all familiar with these two facts:
 
@@ -58,7 +58,7 @@ Mantid developers are all familiar with these two facts:
      :linenos:
 
      using MantidVec = std::vector<double>;
-     using MantidVecPtr = Kernel::cow_ptr<std::vector<double>>;
+     using MantidVecPtr = std::shared_ptr<std::vector<double>>;
 
      // Current ISpectrum interface:
      void setX(const MantidVec &X);
@@ -194,13 +194,13 @@ Overview
     HistogramY &mutableY(const size_t index) &;
     HistogramE &mutableE(const size_t index) &;
 
-    Kernel::cow_ptr<HistogramX> sharedX(const size_t index) const;
-    Kernel::cow_ptr<HistogramY> sharedY(const size_t index) const;
-    Kernel::cow_ptr<HistogramE> sharedE(const size_t index) const;
+    std::shared_ptr<HistogramX> sharedX(const size_t index) const;
+    std::shared_ptr<HistogramY> sharedY(const size_t index) const;
+    std::shared_ptr<HistogramE> sharedE(const size_t index) const;
 
-    void setSharedX(const size_t index, const Kernel::cow_ptr<HistogramX> &x) &;
-    void setSharedY(const size_t index, const Kernel::cow_ptr<HistogramY> &y) &;
-    void setSharedE(const size_t index, const Kernel::cow_ptr<HistogramE> &e) &;
+    void setSharedX(const size_t index, const std::shared_ptr<HistogramX> &x) &;
+    void setSharedY(const size_t index, const std::shared_ptr<HistogramY> &y) &;
+    void setSharedE(const size_t index, const std::shared_ptr<HistogramE> &e) &;
   };
 
 ``Histogram``
@@ -226,13 +226,13 @@ Overview
     HistogramE &mutableE() &;
 
     // Replacement for refX()
-    Kernel::cow_ptr<HistogramX> sharedX() const;
-    Kernel::cow_ptr<HistogramY> sharedY() const;
-    Kernel::cow_ptr<HistogramE> sharedE() const;
+    std::shared_ptr<HistogramX> sharedX() const;
+    std::shared_ptr<HistogramY> sharedY() const;
+    std::shared_ptr<HistogramE> sharedE() const;
     // Replacement for setX()
-    void setSharedX(const Kernel::cow_ptr<HistogramX> &x) &;
-    void setSharedY(const Kernel::cow_ptr<HistogramY> &y) &;
-    void setSharedE(const Kernel::cow_ptr<HistogramE> &e) &;
+    void setSharedX(const std::shared_ptr<HistogramX> &x) &;
+    void setSharedY(const std::shared_ptr<HistogramY> &y) &;
+    void setSharedE(const std::shared_ptr<HistogramE> &e) &;
   };
 
 Note that there is also Dx-data, but it is not widely used and thus omitted from this documentation.
@@ -527,8 +527,8 @@ For compatibility reasons an interface to the internal data, equivalent to the o
     const MantidVec &dataX() const;
     const MantidVec &readX() const;
     // Pointer access is slightly modified, holding a HistogramX:
-    void setX(const Kernel::cow_ptr<HistogramX> &X);
-    Kernel::cow_ptr<HistogramX> ptrX() const;
+    void setX(const std::shared_ptr<HistogramX> &X);
+    std::shared_ptr<HistogramX> ptrX() const;
   };
 
 

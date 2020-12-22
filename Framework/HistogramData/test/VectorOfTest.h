@@ -15,8 +15,8 @@
 
 using Mantid::HistogramData::detail::Iterable;
 using Mantid::HistogramData::detail::VectorOf;
-using Mantid::Kernel::cow_ptr;
 using Mantid::Kernel::make_cow;
+using std::shared_ptr;
 
 class VectorOfTester : public VectorOf<VectorOfTester, std::vector<double>>,
                        public Iterable<VectorOfTester> {
@@ -208,12 +208,6 @@ public:
     TS_ASSERT_EQUALS(&values.data(), cow.get());
   }
 
-  void test_null_cow_ptr_constructor() {
-    cow_ptr<std::vector<double>> cow(nullptr);
-    VectorOfTester values(cow);
-    TS_ASSERT(!values);
-  }
-
   void test_shared_ptr_constructor() {
     auto shared = std::make_shared<std::vector<double>>(2, 0.1);
     VectorOfTester values(shared);
@@ -258,13 +252,6 @@ public:
     TS_ASSERT_EQUALS(values[0], 0.1);
     TS_ASSERT_EQUALS(values[1], 0.1);
     TS_ASSERT_EQUALS(&values.data(), cow.get());
-  }
-
-  void test_null_cow_ptr_assignment() {
-    cow_ptr<std::vector<double>> cow(nullptr);
-    VectorOfTester values(1);
-    values = cow;
-    TS_ASSERT(!values);
   }
 
   void test_cow_ptr_self_assignment() {
