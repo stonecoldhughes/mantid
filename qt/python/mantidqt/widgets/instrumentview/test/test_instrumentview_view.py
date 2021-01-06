@@ -57,7 +57,7 @@ class InstrumentViewTest(unittest.TestCase, QtWidgetFinder):
         self.assert_no_toplevel_widgets()
 
         # create instrument view presenter
-        iv_presenter = InstrumentViewPresenter(ws, parent=None, ads_observer=None)
+        iv_presenter = InstrumentViewPresenter(ws, ads_observer=None)
         self.assert_widget_created()
 
         # select pick tab
@@ -92,7 +92,7 @@ class InstrumentViewTest(unittest.TestCase, QtWidgetFinder):
         LoadInstrument(ws, InstrumentName='ARCS', RewriteSpectraMap=False)
 
         # create instrument view presenter
-        iv_presenter = InstrumentViewPresenter(ws, parent=None, ads_observer=None)
+        iv_presenter = InstrumentViewPresenter(ws, ads_observer=None)
         self.assert_widget_created()
 
         # get render tab

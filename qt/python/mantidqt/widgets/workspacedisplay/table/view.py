@@ -35,7 +35,7 @@ class PreciseDoubleFactory(QItemEditorFactory):
 class TableWorkspaceDisplayView(QTableView):
     repaint_signal = Signal()
 
-    def __init__(self, presenter=None, parent=None):
+    def __init__(self, presenter=None, parent=None, window_flags=Qt.Window):
         super().__init__(parent)
         self.data_model = QStandardItemModel(self)
         self.setModel(self.data_model)
@@ -54,6 +54,8 @@ class TableWorkspaceDisplayView(QTableView):
 
         header = self.horizontalHeader()
         header.sectionDoubleClicked.connect(self.handle_double_click)
+
+        self.setWindowFlags(window_flags)
 
     def columnCount(self):
         return self.data_model.columnCount()

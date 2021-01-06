@@ -24,6 +24,7 @@ from mantidqt.widgets.workspacedisplay.table.tableworkspace_item import (
     create_table_item,
     RevertibleItem,
 )
+from workbench.config import get_window_config
 
 
 class TableWorkspaceDataPresenter(object):
@@ -111,7 +112,6 @@ class TableWorkspaceDisplay(TableWorkspaceDataPresenter, ObservingPresenter, Dat
             self,
             ws,
             plot=None,
-            parent=None,
             model=None,
             view=None,
             name=None,
@@ -133,8 +133,9 @@ class TableWorkspaceDisplay(TableWorkspaceDataPresenter, ObservingPresenter, Dat
         :param ads_observer: ADS observer to be used by the presenter. If not provided the default
                              one is used. Mainly intended for testing.
         """
+        parent, flags = get_window_config()
         model = model if model is not None else TableWorkspaceDisplayModel(ws)
-        view = view if view else TableWorkspaceDisplayView(self, parent)
+        view = view if view else TableWorkspaceDisplayView(self, parent, flags)
         TableWorkspaceDataPresenter.__init__(self, model, view)
 
         # from mantid.api import IPeaksWorkspace

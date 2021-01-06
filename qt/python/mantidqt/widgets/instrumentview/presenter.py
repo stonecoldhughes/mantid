@@ -12,6 +12,7 @@ Contains the presenter for displaying the InstrumentWidget
 """
 from mantidqt.widgets.observers.ads_observer import WorkspaceDisplayADSObserver
 from mantidqt.widgets.observers.observing_presenter import ObservingPresenter
+from workbench.config import get_window_config
 from .view import InstrumentView
 
 
@@ -21,10 +22,12 @@ class InstrumentViewPresenter(ObservingPresenter):
     It has no model as its an old widget written in C++ with out MVP
     """
 
-    def __init__(self, ws, parent=None, ads_observer=None):
+    def __init__(self, ws, ads_observer=None):
         super(InstrumentViewPresenter, self).__init__()
         self.ws_name = str(ws)
-        self.container = InstrumentView(parent, self, self.ws_name)
+
+        parent, flags = get_window_config()
+        self.container = InstrumentView(parent, self, self.ws_name, window_flags=flags)
 
         if ads_observer:
             self.ads_observer = ads_observer

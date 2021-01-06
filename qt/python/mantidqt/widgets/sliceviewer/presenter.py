@@ -19,12 +19,13 @@ from .view import SliceViewerView
 from .adsobsever import SliceViewerADSObserver
 from .peaksviewer import PeaksViewerPresenter, PeaksViewerCollectionPresenter
 from ..observers.observing_presenter import ObservingPresenter
+from workbench.config import get_window_config
 
 
 class SliceViewer(ObservingPresenter):
     TEMPORARY_STATUS_TIMEOUT = 2000
 
-    def __init__(self, ws, parent=None, model=None, view=None, conf=None):
+    def __init__(self, ws, model=None, view=None, conf=None):
         """
         Create a presenter for controlling the slice display for a workspace
         :param ws: Workspace containing data to display and slice
@@ -35,8 +36,9 @@ class SliceViewer(ObservingPresenter):
         self._logger = mantid.kernel.Logger("SliceViewer")
         self._peaks_presenter = None
         self.model = model if model else SliceViewerModel(ws)
-        self.parent = parent
         self.conf = conf
+
+        parent, flags = get_window_config()
 
         # Acts as a 'time capsule' to the properties of the model at this
         # point in the execution. By the time the ADS observer calls self.replace_workspace,
@@ -48,7 +50,7 @@ class SliceViewer(ObservingPresenter):
 
         self.view = view if view else SliceViewerView(self, self.model.get_dimensions_info(),
                                                       self.model.can_normalize_workspace(), parent,
-                                                      conf)
+                                                      flags, conf)
         self.view.setWindowTitle(self.model.get_title())
         self.view.data_view.create_axes_orthogonal(
             redraw_on_zoom=not self.model.can_support_dynamic_rebinning())

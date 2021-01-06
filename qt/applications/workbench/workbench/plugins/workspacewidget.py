@@ -195,7 +195,7 @@ class WorkspaceWidget(PluginWidget):
         """
         for ws in self._ads.retrieveWorkspaces(names, unrollGroups=True):
             try:
-                SampleLogs(ws=ws, parent=self)
+                SampleLogs(ws=ws)
             except Exception as exception:
                 logger.warning("Could not open sample logs for workspace '{}'."
                                "".format(ws.name()))
@@ -209,7 +209,7 @@ class WorkspaceWidget(PluginWidget):
         """
         for ws in self._ads.retrieveWorkspaces(names, unrollGroups=True):
             try:
-                presenter = SliceViewer(ws=ws, parent=self, conf=CONF)
+                presenter = SliceViewer(ws=ws, conf=CONF)
                 presenter.view.show()
             except Exception as exception:
                 logger.warning("Could not open slice viewer for workspace '{}'."
@@ -225,7 +225,7 @@ class WorkspaceWidget(PluginWidget):
         for ws in self._ads.retrieveWorkspaces(names, unrollGroups=True):
             if ws.getInstrument().getName():
                 try:
-                    presenter = InstrumentViewPresenter(ws, parent=self)
+                    presenter = InstrumentViewPresenter(ws)
                     presenter.show_view()
                 except Exception as exception:
                     logger.warning("Could not show instrument for workspace "
@@ -243,12 +243,12 @@ class WorkspaceWidget(PluginWidget):
                 MatrixWorkspaceDisplay.supports(ws)
                 # the plot function is being injected in the presenter
                 # this is done so that the plotting library is mockable in testing
-                presenter = MatrixWorkspaceDisplay(ws, plot=plot, parent=self)
+                presenter = MatrixWorkspaceDisplay(ws, plot=plot)
                 presenter.show_view()
             except ValueError:
                 try:
                     TableWorkspaceDisplay.supports(ws)
-                    presenter = TableWorkspaceDisplay(ws, plot=matplotlib.pyplot, parent=self)
+                    presenter = TableWorkspaceDisplay(ws, plot=matplotlib.pyplot)
                     presenter.show_view()
                 except ValueError:
                     logger.error("Could not open workspace: {0} with neither "
