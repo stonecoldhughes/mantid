@@ -534,8 +534,9 @@ class SliceViewerView(QWidget, ObservingView):
         super().__init__(parent)
 
         self.presenter = presenter
+        if window_flags:
+            self.setWindowFlags(window_flags)
 
-        self.setWindowFlags(window_flags)
         self.setAttribute(Qt.WA_DeleteOnClose, True)
 
         self._splitter = QSplitter(self)

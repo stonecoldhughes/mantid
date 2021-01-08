@@ -30,7 +30,8 @@ class SampleLogsView(QSplitter):
         self.presenter = presenter
 
         self.setWindowTitle("{} sample logs".format(name))
-        self.setWindowFlags(window_flags)
+        if window_flags:
+            self.setWindowFlags(window_flags)
         self.setAttribute(Qt.WA_DeleteOnClose, True)
 
         # left hand side

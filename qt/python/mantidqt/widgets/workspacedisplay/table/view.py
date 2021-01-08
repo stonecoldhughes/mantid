@@ -54,8 +54,8 @@ class TableWorkspaceDisplayView(QTableView):
 
         header = self.horizontalHeader()
         header.sectionDoubleClicked.connect(self.handle_double_click)
-
-        self.setWindowFlags(window_flags)
+        if window_flags:
+            self.setWindowFlags(window_flags)
 
     def columnCount(self):
         return self.data_model.columnCount()

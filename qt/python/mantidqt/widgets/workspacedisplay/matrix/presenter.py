@@ -16,14 +16,14 @@ from mantidqt.widgets.workspacedisplay.status_bar_view import StatusBarView
 from .model import MatrixWorkspaceDisplayModel
 from .view import MatrixWorkspaceDisplayView
 from mantid.simpleapi import CreateEmptyTableWorkspace
-from workbench.config import get_window_config
 
 
 class MatrixWorkspaceDisplay(ObservingPresenter, DataCopier):
     A_LOT_OF_THINGS_TO_PLOT_MESSAGE = "You selected {} spectra to plot. Are you sure you want to plot that many?"
     NUM_SELECTED_FOR_CONFIRMATION = 10
 
-    def __init__(self, ws, plot=None, model=None, view=None, ads_observer=None, container=None,
+    def __init__(self, ws, plot=None, parent=None, window_flags=None, model=None, view=None, ads_observer=None,
+                 container=None,
                  window_width=600, window_height=400):
         """
         Creates a display for the provided workspace.
@@ -31,6 +31,7 @@ class MatrixWorkspaceDisplay(ObservingPresenter, DataCopier):
         :param ws: Workspace to be displayed
         :param plot: Plotting function that will be used to plot workspaces. Passed in as parameter to allow mocking
         :param parent: Parent of the widget
+        :param window_flags: An optional set of window flags
         :param model: Model to be used by the widget. Passed in as parameter to allow mocking
         :param view: View to be used by the widget. Passed in as parameter to allow mocking
         :param ads_observer: ADS observer to be used by the presenter. If not provided the default
@@ -38,11 +39,9 @@ class MatrixWorkspaceDisplay(ObservingPresenter, DataCopier):
         """
         self.hasDx = any([ws.hasDx(i) for i in range(ws.getNumberHistograms())])
 
-        parent, flags = get_window_config()
-
         # Create model and view, or accept mocked versions
         self.model = model if model else MatrixWorkspaceDisplayModel(ws)
-        self.view = view if view else MatrixWorkspaceDisplayView(self, parent, flags)
+        self.view = view if view else MatrixWorkspaceDisplayView(self, parent, window_flags)
         self.container = container if container else StatusBarView(parent, self.view, self.model.get_name(),
                                                                    window_width=window_width,
                                                                    window_height=window_height,

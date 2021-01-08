@@ -9,19 +9,17 @@
 #
 from .model import SampleLogsModel
 from .view import SampleLogsView
-from workbench.config import get_window_config
 
 
 class SampleLogs(object):
     """
     """
-    def __init__(self, ws, model=None, view=None):
+    def __init__(self, ws, parent=None, window_flags=None, model=None, view=None):
         # Create model and view, or accept mocked versions
         self.model = model if model else SampleLogsModel(ws)
-        parent, flags = get_window_config()
         self.view = view if view else SampleLogsView(self,
                                                      parent,
-                                                     flags,
+                                                     window_flags,
                                                      self.model.get_name(),
                                                      self.model.isMD(),
                                                      self.model.getNumExperimentInfo())
