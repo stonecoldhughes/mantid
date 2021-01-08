@@ -92,8 +92,8 @@ void FitScriptGeneratorView::connectUiSignals() {
           SLOT(onAddWorkspaceClicked()));
   connect(m_dataTable.get(), SIGNAL(cellChanged(int, int)), this,
           SLOT(onCellChanged(int, int)));
-  connect(m_dataTable.get(), SIGNAL(itemPressed(QTableWidgetItem *)), this,
-          SLOT(onItemPressed()));
+  connect(m_dataTable.get(), SIGNAL(itemSelectionChanged()), this,
+          SLOT(onItemSelected()));
 
   connect(m_functionTreeView.get(),
           SIGNAL(functionRemovedString(QString const &)), this,
@@ -187,7 +187,7 @@ void FitScriptGeneratorView::onCellChanged(int row, int column) {
     m_presenter->notifyPresenter(ViewEvent::EndXChanged);
 }
 
-void FitScriptGeneratorView::onItemPressed() {
+void FitScriptGeneratorView::onItemSelected() {
   m_presenter->notifyPresenter(ViewEvent::SelectionChanged);
 }
 
