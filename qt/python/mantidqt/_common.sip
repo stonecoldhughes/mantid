@@ -1070,6 +1070,21 @@ public:
 };
 
 // ----------------------------------------------------------------------------
+// FittingMode
+// ----------------------------------------------------------------------------
+
+namespace MantidQt
+{
+namespace MantidWidgets
+{
+%TypeHeaderCode
+#include "MantidQtWidgets/Common/FittingMode.h"
+%End
+enum FittingMode {SIMULTANEOUS, SEQUENTIAL, SIMULTANEOUS_SEQUENTIAL};
+};
+};
+
+// ----------------------------------------------------------------------------
 // FitScriptGeneratorView
 // ----------------------------------------------------------------------------
 
@@ -1080,6 +1095,7 @@ class FitScriptGeneratorView : QWidget {
 public:
     FitScriptGeneratorView(
         QWidget *parent = nullptr,
+        MantidQt::MantidWidgets::FittingMode fittingMode = MantidQt::MantidWidgets::SEQUENTIAL,
         const QMap<QString, QString> &fitOptions = QMap<QString, QString>()) /KeywordArgs="All"/;
 };
 
