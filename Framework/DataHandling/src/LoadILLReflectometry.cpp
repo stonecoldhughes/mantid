@@ -29,16 +29,7 @@
 #include "MantidKernel/UnitFactory.h"
 #include "MantidKernel/V3D.h"
 
-using Mantid::Types::Core::DateAndTime;
-
 namespace {
-const DateAndTime CYCLE203TIME = DateAndTime("2020-07-31T23:59:59");
-
-/// Component coordinates for FIGARO, in meter.
-namespace FIGARO {
-constexpr double DH1Z{1.135}; // Motor DH1 horizontal position
-constexpr double DH2Z{2.077}; // Motor DH2 horizontal position
-} // namespace FIGARO
 
 /// Convert wavelength to TOF
 double wavelengthToTOF(const double lambda, const double l1, const double l2) {
@@ -158,6 +149,7 @@ namespace DataHandling {
 using namespace Kernel;
 using namespace API;
 using namespace NeXus;
+using Mantid::Types::Core::DateAndTime;
 
 // Register the algorithm into the AlgorithmFactory
 DECLARE_NEXUS_FILELOADER_ALGORITHM(LoadILLReflectometry)
@@ -222,66 +214,39 @@ void LoadILLReflectometry::init() {
                   "X unit of the OutputWorkspace");
 }
 
-/// Validate the inputs
-std::map<std::string, std::string> LoadILLReflectometry::validateInputs() {
-  std::map<std::string, std::string> issues;
-  if (getPropertyValue("Measurement") == "ReflectedBeam" &&
-      isDefault("BraggAngle")) {
-    issues["BraggAngle"] = "Bragg angle is mandatory for reflected beam";
-  }
-  return issues;
-}
-
 /// Execute the algorithm.
 void LoadILLReflectometry::exec() {
-  // open the root node
   NeXus::NXRoot root(getPropertyValue("Filename"));
   NXEntry firstEntry{root.openFirstEntry()};
-  // set instrument specific names of Nexus file entries
   initNames(firstEntry);
-  // load Monitor details: n. monitors x monitor contents
+  sampleAngle(firstEntry);
   std::vector<std::vector<int>> monitorsData{loadMonitors(firstEntry)};
-  // load Data details (number of tubes, channels, etc)
   loadDataDetails(firstEntry);
-  // initialise workspace
   initWorkspace(monitorsData);
-  // load the instrument from the IDF if it exists
   loadInstrument();
-  // get properties
   loadNexusEntriesIntoProperties();
-  // load data into the workspace
-  loadData(firstEntry, monitorsData, getXValues());
-  root.close();
+  loadData(firstEntry, monitorsData, getXValues());  
   firstEntry.close();
+  root.close();
   initPixelWidth();
-  // Move components.
-  m_sampleZOffset = sampleHorizontalOffset();
+  sampleHorizontalOffset();
   placeSource();
   placeDetector();
   placeSlits();
   convertTofToWavelength();
-  // Set the output workspace property
   setProperty("OutputWorkspace", m_localWorkspace);
-} // exec
+}
 
 /// Run the Child Algorithm LoadInstrument.
 void LoadILLReflectometry::loadInstrument() {
-  // execute the Child Algorithm. Catch and log any error, but don't stop.
-  g_log.debug("Loading instrument definition...");
-  try {
-    IAlgorithm_sptr loadInst = createChildAlgorithm("LoadInstrument");
-    const std::string instrumentName =
-        m_instrument == Supported::D17 ? "D17" : "FIGARO";
-    loadInst->setPropertyValue("InstrumentName", instrumentName);
-    loadInst->setProperty("RewriteSpectraMap",
-                          Mantid::Kernel::OptionalBool(true));
-    loadInst->setProperty<MatrixWorkspace_sptr>("Workspace", m_localWorkspace);
-    loadInst->executeAsChildAlg();
-  } catch (std::runtime_error &e) {
-    g_log.information()
-        << "Unable to succesfully run LoadInstrument child algorithm: "
-        << e.what() << '\n';
-  }
+  IAlgorithm_sptr loadInst = createChildAlgorithm("LoadInstrument");
+  const std::string instrumentName =
+      m_instrument == Supported::D17 ? "D17" : "FIGARO";
+  loadInst->setPropertyValue("InstrumentName", instrumentName);
+  loadInst->setProperty("RewriteSpectraMap",
+                        Mantid::Kernel::OptionalBool(true));
+  loadInst->setProperty<MatrixWorkspace_sptr>("Workspace", m_localWorkspace);
+  loadInst->executeAsChildAlg();
 }
 
 /**
@@ -397,10 +362,8 @@ void LoadILLReflectometry::initWorkspace(
 void LoadILLReflectometry::loadDataDetails(NeXus::NXEntry &entry) {
   // PSD data D17 256 x 1 x 1000
   // PSD data FIGARO 1 x 256 x 1000
-
   m_startTime =
       DateAndTime(m_loader.dateTimeInIsoFormat(entry.getString("start_time")));
-
   if (m_acqMode) {
     NXFloat timeOfFlight = entry.openNXFloat("instrument/PSD/time_of_flight");
     timeOfFlight.load();
@@ -410,20 +373,9 @@ void LoadILLReflectometry::loadDataDetails(NeXus::NXEntry &entry) {
   } else { // monochromatic mode
     m_numberOfChannels = 1;
   }
-
   NXInt nChannels = entry.openNXInt("instrument/PSD/detsize");
   nChannels.load();
   m_numberOfHistograms = nChannels[0];
-
-  g_log.debug()
-      << "Please note that ILL reflectometry instruments have "
-         "several tubes, after integration one "
-         "tube remains in the Nexus file.\n Number of tubes (banks): 1\n";
-  g_log.debug() << "Number of pixels per tube (number of detectors and number "
-                   "of histograms): "
-                << m_numberOfHistograms << '\n';
-  g_log.debug() << "Number of time channels: " << m_numberOfChannels << '\n';
-  g_log.debug() << "Channel width: " << m_channelWidth << " 1e-6 sec\n";
 }
 
 /**
@@ -455,7 +407,6 @@ LoadILLReflectometry::loadSingleMonitor(NeXus::NXEntry &entry,
                                         const std::string &monitor_data) {
   NXData dataGroup = entry.openNXData(monitor_data);
   NXInt data = dataGroup.openIntData();
-  // load counts
   data.load();
   return std::vector<int>(data(), data() + data.size());
 }
@@ -482,6 +433,7 @@ LoadILLReflectometry::loadMonitors(NeXus::NXEntry &entry) {
  * @return :: vector holding the x values
  */
 std::vector<double> LoadILLReflectometry::getXValues() {
+  const auto &instrument = m_localWorkspace->getInstrument();
   std::vector<double> xVals;             // no initialisation
   xVals.reserve(m_numberOfChannels + 1); // reserve memory
   try {
@@ -552,14 +504,7 @@ std::vector<double> LoadILLReflectometry::getXValues() {
                       << ". Check you NeXus file.\n";
       }
 
-      double chopWindow = 45.0;
-      if (m_startTime > CYCLE203TIME) {
-        // this is a workaround for the chopper window which has a different
-        // value since cycle 203 at the moment it is not possible to achieve
-        // this via IPF without duplicating the IDF neither it is properly
-        // written in the nexus, so this is the only solution
-        chopWindow = 20.;
-      }
+      const double chopWindow = instrument->getNumberParameter("chopper_window_opening")[0];
       m_localWorkspace->mutableRun().addProperty("ChopperWindow", chopWindow,
                                                  "degree", true);
       g_log.debug() << "Chopper Opening Window [degrees]" << chopWindow << '\n';
@@ -598,15 +543,11 @@ std::vector<double> LoadILLReflectometry::getXValues() {
 void LoadILLReflectometry::loadData(
     NeXus::NXEntry &entry, const std::vector<std::vector<int>> &monitorsData,
     const std::vector<double> &xVals) {
-  g_log.debug("Loading data...");
   NXData dataGroup = entry.openNXData("data");
   NXInt data = dataGroup.openIntData();
-  // load the counts from the file into memory
   data.load();
   const size_t nb_monitors = monitorsData.size();
   Progress progress(this, 0, 1, m_numberOfHistograms + nb_monitors);
-
-  // load data
   if (!xVals.empty()) {
     HistogramData::BinEdges binEdges(xVals);
     PARALLEL_FOR_IF(Kernel::threadSafe(*m_localWorkspace))
@@ -628,8 +569,7 @@ void LoadILLReflectometry::loadData(
           static_cast<specnum_t>(spectrum));
       progress.report();
     }
-  } else
-    g_log.debug("Vector of x values is empty");
+  }
 }
 
 /**
@@ -637,14 +577,11 @@ void LoadILLReflectometry::loadData(
  * sample log properties
  */
 void LoadILLReflectometry::loadNexusEntriesIntoProperties() {
-  g_log.debug("Building properties...");
-  // Open NeXus file
   const std::string filename{getPropertyValue("Filename")};
   NXhandle nxfileID;
   NXstatus stat = NXopen(filename.c_str(), NXACC_READ, &nxfileID);
   if (stat == NX_ERROR)
     throw Kernel::Exception::FileError("Unable to open File:", filename);
-
   m_loader.addNexusFieldsToWsRun(nxfileID, m_localWorkspace->mutableRun());
   NXclose(&nxfileID);
 }
@@ -700,8 +637,6 @@ double LoadILLReflectometry::reflectometryPeak() {
   // determine initial centre: index of the maximum value
   const size_t maxIndex = std::distance(integralWS->y(0).cbegin(), maxValueIt);
   const auto centreByMax = static_cast<double>(maxIndex);
-  g_log.debug() << "Peak maximum position: " << centreByMax << '\n';
-  // determine sigma
   const auto &ys = integralWS->y(0);
   auto lessThanHalfMax = [height](const double x) { return x < 0.5 * height; };
   using IterType = HistogramData::HistogramY::const_iterator;
@@ -710,14 +645,10 @@ double LoadILLReflectometry::reflectometryPeak() {
   auto maxFwhmIt = std::find_if(maxValueIt, ys.cend(), lessThanHalfMax);
   std::reverse_iterator<IterType> revMaxFwhmIt{maxFwhmIt};
   if (revMinFwhmIt == ys.crend() || maxFwhmIt == ys.cend()) {
-    g_log.warning() << "Couldn't determine fwhm of beam, using position of max "
-                       "value as beam center.\n";
     return centreByMax + startIndex;
   }
   const auto fwhm =
       static_cast<double>(std::distance(revMaxFwhmIt, revMinFwhmIt) + 1);
-  g_log.debug() << "Initial fwhm (full width at half maximum): " << fwhm
-                << '\n';
   // generate Gaussian
   auto func =
       API::FunctionFactory::Instance().createFunction("CompositeFunction");
@@ -746,8 +677,6 @@ double LoadILLReflectometry::reflectometryPeak() {
     return centreByMax + startIndex;
   }
   const auto centre = gaussian->centre();
-  g_log.debug() << "Sigma: " << gaussian->fwhm() << '\n';
-  g_log.debug() << "Estimated peak position: " << centre << '\n';
   return centre + startIndex;
 }
 
@@ -760,13 +689,42 @@ double LoadILLReflectometry::detectorRotation() {
                                              peakCentre, true);
   const double detectorCentre = getProperty("DetectorCentreFractionalIndex");
   const std::string measurement = getPropertyValue("Measurement");
-  const double braggAngle = getProperty("BraggAngle");
   double two_theta =
       -offsetAngle(peakCentre, detectorCentre, m_detectorDistance);
   if (measurement == "ReflectedBeam") {
-    two_theta += 2 * braggAngle;
+    if (isDefault("BraggAngle")) {
+      if (m_sampleAngle == 0.) {
+        g_log.warning(
+            "Sample angle is either 0 or doesn't exist in the file. "
+            "Please specify BraggAngle manually for reflected beams.");
+      }
+    }
+    two_theta += 2 * (isDefault("BraggAngle") ? m_sampleAngle
+                                              : getProperty("BraggAngle"));
   }
   return two_theta;
+}
+
+/** Returns the sample angle (i.e. bragg angle) [degrees]
+ * Used when measurement type is reflecteed beam (otherwise must be zero)
+ * Note that DAN calibration needs information also from the corresponding
+ * direct beam, hence it cannot be done in the loader, but is done in
+ * preprocessing algorithm. However loader should still support loading reflected
+ * beams standalone, hence sample angle is taken if BraggAngle is not manually
+ * specified.
+ */
+void LoadILLReflectometry::sampleAngle(NeXus::NXEntry &entry) {
+  if (m_instrument == Supported::D17) {
+    if (entry.isValid("entry0/instrument/SAN/value")) {
+      m_sampleAngle = entry.getDouble("entry0/instrument/SAN/value");
+    } else if (entry.isValid("entry0/instrument/san/value")) {
+      m_sampleAngle = entry.getDouble("entry0/instrument/san/value");
+    }
+  } else {
+    if (entry.isValid("entry0/instrument/Theta/wanted_theta")) {
+      m_sampleAngle = entry.getDouble("entry0/instrument/Theta/wanted_theta");
+    }
+  }
 }
 
 /// Initialize m_pixelWidth from the IDF and check for NeXus consistency.
@@ -803,20 +761,15 @@ void LoadILLReflectometry::initPixelWidth() {
 
 /// Update detector position according to data file
 void LoadILLReflectometry::placeDetector() {
-  g_log.debug("Move the detector bank \n");
   m_detectorDistance = sampleDetectorDistance();
   m_localWorkspace->mutableRun().addProperty<double>("L2", m_detectorDistance,
                                                      true);
   m_detectorAngle = detectorAngle();
-  g_log.debug() << "Sample-detector distance: " << m_detectorDistance << "m.\n";
   const auto detectorRotationAngle = detectorRotation();
   const std::string componentName = "detector";
-  const RotationPlane rotPlane = [this]() {
-    if (m_instrument != Supported::FIGARO)
-      return RotationPlane::horizontal;
-    else
-      return RotationPlane::vertical;
-  }();
+  const RotationPlane rotPlane = m_instrument == Supported::D17
+                                     ? RotationPlane::horizontal
+                                     : RotationPlane::vertical;
   const auto newpos =
       detectorPosition(rotPlane, m_detectorDistance, detectorRotationAngle);
   m_loader.moveComponent(m_localWorkspace, componentName, newpos);
@@ -872,7 +825,6 @@ void LoadILLReflectometry::placeSlits() {
 /// Update source position.
 void LoadILLReflectometry::placeSource() {
   m_sourceDistance = sourceSampleDistance();
-  g_log.debug() << "Source-sample distance " << m_sourceDistance << "m.\n";
   const std::string source = "chopper1";
   const V3D newPos{0.0, 0.0, -m_sourceDistance};
   m_loader.moveComponent(m_localWorkspace, source, newPos);
@@ -886,12 +838,17 @@ double LoadILLReflectometry::collimationAngle() const {
 
 /// Return the detector center angle.
 double LoadILLReflectometry::detectorAngle() const {
-  if (m_instrument != Supported::FIGARO) {
+  if (m_instrument == Supported::D17) {
     return doubleFromRun(m_detectorAngleName);
+  } else {
+    const double DH1Y = mmToMeter(doubleFromRun("DH1.value"));
+    const double DH2Y = mmToMeter(doubleFromRun("DH2.value"));
+    const double DH1Z =
+        m_localWorkspace->getInstrument()->getNumberParameter("DH1Z")[0];
+    const double DH2Z =
+        m_localWorkspace->getInstrument()->getNumberParameter("DH2Z")[0];
+    return radToDeg(std::atan2(DH2Y - DH1Y, DH2Z - DH1Z));
   }
-  const double DH1Y = mmToMeter(doubleFromRun("DH1.value"));
-  const double DH2Y = mmToMeter(doubleFromRun("DH2.value"));
-  return radToDeg(std::atan2(DH2Y - DH1Y, FIGARO::DH2Z - FIGARO::DH1Z));
 }
 
 /** Calculate the offset angle between detector center and peak.
@@ -916,7 +873,7 @@ double LoadILLReflectometry::offsetAngle(const double peakCentre,
  */
 double LoadILLReflectometry::sampleDetectorDistance() const {
   double sampleDetectorDistance;
-  if (m_instrument != Supported::FIGARO) {
+  if (m_instrument == Supported::D17) {
     sampleDetectorDistance = mmToMeter(doubleFromRun("det.value"));
   } else {
     // For FIGARO, the DTR field contains the sample-to-detector distance
@@ -924,13 +881,14 @@ double LoadILLReflectometry::sampleDetectorDistance() const {
     const double restZ = mmToMeter(doubleFromRun("DTR.value"));
     // Motor DH1 vertical coordinate.
     const double DH1Y = mmToMeter(doubleFromRun("DH1.value"));
+    const double DH1Z =
+        m_localWorkspace->getInstrument()->getNumberParameter("DH1Z")[0];
     const double detectorRestY = 0.509;
     const double detAngle = detectorAngle();
     const double detectorY =
-        std::sin(degToRad(detAngle)) * (restZ - FIGARO::DH1Z) + DH1Y -
-        detectorRestY;
+        std::sin(degToRad(detAngle)) * (restZ - DH1Z) + DH1Y - detectorRestY;
     const double detectorZ =
-        std::cos(degToRad(detAngle)) * (restZ - FIGARO::DH1Z) + FIGARO::DH1Z;
+        std::cos(degToRad(detAngle)) * (restZ - DH1Z) + DH1Z;
     const double pixelOffset = detectorRestY - 0.5 * m_pixelWidth;
     const double beamY = detectorY + pixelOffset * std::cos(degToRad(detAngle));
     const double sht1 = mmToMeter(doubleFromRun("SHT1.value"));
@@ -944,15 +902,10 @@ double LoadILLReflectometry::sampleDetectorDistance() const {
 }
 
 /// Return the horizontal offset along the z axis.
-double LoadILLReflectometry::sampleHorizontalOffset() const {
-  if (m_instrument != Supported::FIGARO) {
-    return 0.;
+void LoadILLReflectometry::sampleHorizontalOffset() {
+  if (m_instrument == Supported::FIGARO) {
+    m_sampleZOffset = mmToMeter(doubleFromRun("Distance.sample_changer_horizontal_offset"));
   }
-  if (m_localWorkspace->run().hasProperty(
-          "Distance.sampleHorizontalOffset")) // Valid from 2018.
-    return mmToMeter(doubleFromRun("Distance.sampleHorizontalOffset"));
-  else // Valid before 2018.
-    return mmToMeter(doubleFromRun("Theta.sampleHorizontalOffset"));
 }
 
 /** Return the source to sample distance for the current instrument.
@@ -960,7 +913,7 @@ double LoadILLReflectometry::sampleHorizontalOffset() const {
  *  @return the source to sample distance in meters
  */
 double LoadILLReflectometry::sourceSampleDistance() const {
-  if (m_instrument != Supported::FIGARO) {
+  if (m_instrument == Supported::D17) {
     // the Distance.ChopperGap in the nexus file was initially in cm, then in m,
     // now in mm between the first two generations we can flag on the
     // dist_chop_samp vs MidChopper_Sample_distance however between the 2nd and
@@ -978,9 +931,9 @@ double LoadILLReflectometry::sourceSampleDistance() const {
         pairCentre = mmToMeter(doubleFromRun(
             "VirtualChopper.MidChopper_Sample_distance"));     // in [m]
         pairSeparation = doubleFromRun("Distance.ChopperGap"); // in [m]
-        if (m_startTime > CYCLE203TIME) {
-          pairSeparation = mmToMeter(pairSeparation);
-        }
+        //if (m_startTime > CYCLE203TIME) {
+        //  pairSeparation = mmToMeter(pairSeparation);
+        //}
         m_localWorkspace->mutableRun().addProperty(
             "VirtualChopper.MidChopper_Sample_distance", pairCentre, "meter",
             true);
