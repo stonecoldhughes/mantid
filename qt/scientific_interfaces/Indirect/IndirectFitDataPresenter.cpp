@@ -14,7 +14,7 @@ namespace MantidQt {
 namespace CustomInterfaces {
 namespace IDA {
 
-IndirectFitDataPresenter::IndirectFitDataPresenter(IndirectFittingModel *model,
+IndirectFitDataPresenter::IndirectFitDataPresenter(IIndirectFittingModel *model,
                                                    IIndirectFitDataView *view)
     : IndirectFitDataPresenter(
           model, view,
@@ -22,7 +22,7 @@ IndirectFitDataPresenter::IndirectFitDataPresenter(IndirectFittingModel *model,
               model->m_fitDataModel.get(), view->getDataTable())) {}
 
 IndirectFitDataPresenter::IndirectFitDataPresenter(
-    IndirectFittingModel *model, IIndirectFitDataView *view,
+    IIndirectFittingModel *model, IIndirectFitDataView *view,
     std::unique_ptr<IndirectDataTablePresenter> tablePresenter)
     : m_model(model), m_view(view),
       m_tablePresenter(std::move(tablePresenter)) {
