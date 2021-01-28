@@ -5,7 +5,7 @@
 //   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 // SPDX - License - Identifier: GPL - 3.0 +
 #include "IndirectFittingModel.h"
-#include "IndirectFitDataModel.h"
+#include "IndirectFitDataTableModel.h"
 #include "IndirectFitOutputModel.h"
 
 #include "MantidAPI/AlgorithmManager.h"
@@ -138,7 +138,7 @@ void addInputDataToSimultaneousFit(const IAlgorithm_sptr &fitAlgorithm,
 }
 
 void addInputDataToSimultaneousFit(const IAlgorithm_sptr &fitAlgorithm,
-                                   const IIndirectFitDataModel *fittingData) {
+                                   const IIndirectFitDataTableModel *fittingData) {
   for (auto index = FitDomainIndex{0};
        index < FitDomainIndex{fittingData->getNumberOfDomains()}; index++) {
     std::string suffix =
@@ -208,7 +208,7 @@ std::ostringstream &addInputString(const std::string &workspaceName,
         "Workspace name is empty. The sample workspace may not be loaded.");
 }
 
-std::string constructInputString(const IIndirectFitDataModel *fittingData) {
+std::string constructInputString(const IIndirectFitDataTableModel *fittingData) {
   std::ostringstream input;
   for (auto index = FitDomainIndex{0};
        index < fittingData->getNumberOfDomains(); index++) {
@@ -272,7 +272,7 @@ std::unordered_map<FittingMode, std::string> fitModeToName =
         {{FittingMode::SEQUENTIAL, "Seq"}, {FittingMode::SIMULTANEOUS, "Sim"}});
 
 IndirectFittingModel::IndirectFittingModel()
-    : m_fitDataModel(std::make_unique<IndirectFitDataModel>()),
+    : m_fitDataModel(std::make_unique<IndirectFitDataTableModel>()),
       m_previousModelSelected(false), m_fittingMode(FittingMode::SEQUENTIAL),
       m_fitOutput(std::make_unique<IndirectFitOutputModel>()) {}
 

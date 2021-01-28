@@ -23,12 +23,12 @@ using IndirectFitDataCollectionType =
     IndexCollectionType<TableDatasetIndex, std::unique_ptr<IndirectFitData>>;
 
 /*
-   IIndirectFitDataModel - Specifies an interface for updating, querying and
+   IIndirectFitDataTableModel - Specifies an interface for updating, querying and
    accessing the raw data in IndirectFitAnalysisTabs
 */
-class MANTIDQT_INDIRECT_DLL IIndirectFitDataModel {
+class MANTIDQT_INDIRECT_DLL IIndirectFitDataTableModel {
 public:
-  virtual ~IIndirectFitDataModel() = default;
+  virtual ~IIndirectFitDataTableModel() = default;
   virtual bool hasWorkspace(std::string const &workspaceName) const = 0;
   virtual Mantid::API::MatrixWorkspace_sptr
   getWorkspace(TableDatasetIndex index) const = 0;
