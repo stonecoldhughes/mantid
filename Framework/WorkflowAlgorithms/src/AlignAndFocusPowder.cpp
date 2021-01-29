@@ -919,7 +919,7 @@ AlignAndFocusPowder::convertUnits(API::MatrixWorkspace_sptr matrixws,
 API::MatrixWorkspace_sptr
 AlignAndFocusPowder::rebin(API::MatrixWorkspace_sptr matrixws) {
   if (m_resampleX != 0) {
-    // ResempleX
+    // ResampleX
     g_log.information() << "running ResampleX(NumberBins=" << abs(m_resampleX)
                         << ", LogBinning=" << (m_resampleX < 0) << ", dMin("
                         << m_dmins.size() << "), dmax(" << m_dmaxs.size()
