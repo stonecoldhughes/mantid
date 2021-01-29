@@ -755,11 +755,13 @@ void AlignAndFocusPowder::exec() {
      } else {
        m_outputW = rebinRagged(m_outputW);
      }
-    if (m_processLowResTOF)
+    if (m_processLowResTOF) {
       if(m_delta.empty()) {
         m_lowResW = rebin(m_lowResW);
       } else {
         m_lowResW = rebinRagged(m_lowResW);
+      }
+    }
   }
   m_progress->report();
 
