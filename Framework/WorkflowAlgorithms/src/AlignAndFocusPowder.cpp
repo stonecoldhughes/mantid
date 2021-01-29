@@ -359,7 +359,7 @@ void AlignAndFocusPowder::exec() {
   dspace = getProperty(PropertyNames::BIN_IN_D);
   auto dmin = getVecPropertyFromPmOrSelf(PropertyNames::D_MINS, m_dmins);
   auto dmax = getVecPropertyFromPmOrSelf(PropertyNames::D_MAXS, m_dmaxs);
-  getVecPropertyFromPmOrSelf(PropertyNames::DELTA, m_delta);
+  this->getVecPropertyFromPmOrSelf(PropertyNames::DELTA, m_delta);
   LRef = getProperty(PropertyNames::UNWRAP_REF);
   DIFCref = getProperty(PropertyNames::LOWRES_REF);
   const bool applyLorentz = getProperty(PropertyNames::LORENTZ);
@@ -750,11 +750,11 @@ void AlignAndFocusPowder::exec() {
   // this next call should probably be in for rebin as well
   // but it changes the system tests
   if (dspace && m_resampleX != 0) {
-     if(m_delta.empty()) {
+    if(m_delta.empty()) {
        m_outputW = rebin(m_outputW);
-     } else {
+    } else {
        m_outputW = rebinRagged(m_outputW);
-     }
+    }
     if (m_processLowResTOF) {
       if(m_delta.empty()) {
         m_lowResW = rebin(m_lowResW);
@@ -802,7 +802,7 @@ void AlignAndFocusPowder::exec() {
   m_outputW = convertUnits(m_outputW, "TOF");
   m_progress->report();
 
-  if(!(dspace && m_delta.empty())) {
+  if(!dspace && !m_delta.empty()) {
     m_outputW = rebinRagged(m_outputW);
   }
 
@@ -948,16 +948,14 @@ AlignAndFocusPowder::rebin(API::MatrixWorkspace_sptr matrixws) {
     return matrixws;
   } else {
     g_log.information() << "running Rebin( ";
-    for (double param : m_params) {
+    for (double param : m_params)
       g_log.information() << param << " ";
-    }
     g_log.information() << ") started at "
                         << Types::Core::DateAndTime::getCurrentTime() << "\n";
-    for (double param : m_params) {
-      if (isEmpty(param)) {
+    for (double param : m_params)
+      if (isEmpty(param))
         g_log.warning("encountered empty binning parameter");
-      }
-    }
+
     API::IAlgorithm_sptr rebin3Alg = createChildAlgorithm("Rebin");
     rebin3Alg->setProperty("InputWorkspace", matrixws);
     rebin3Alg->setProperty("OutputWorkspace", matrixws);
@@ -998,6 +996,7 @@ AlignAndFocusPowder::rebinRagged(API::MatrixWorkspace_sptr matrixws) {
   matrixws = alg->getProperty("OutputWorkspace");
   return matrixws;
 }
+
 
 //----------------------------------------------------------------------------------------------
 /** Add workspace2 to workspace1 by adding spectrum.
