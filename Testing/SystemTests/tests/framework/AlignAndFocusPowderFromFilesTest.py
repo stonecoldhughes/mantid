@@ -302,9 +302,8 @@ class AbsorptionCompare(systemtesting.MantidSystemTest):
         return (self.wksp_mem, self.wksp_file)
 
 class VulcanRaggedCompare(systemtesting.MantidSystemTest):
-    cal_file  = "PG3_FERNS_d4832_2011_08_24.cal"
-    char_file = "PG3_characterization_2012_02_23-HR-ILL.txt"
-    data_file = 'PG3_9829_event.nxs'
+    cal_file  = "VULCAN_calibrate_2019_06_27.h5"
+    data_file = 'VULCAN_189186.nxs.h5'
 
     def cleanup(self):
         return do_cleanup(self.cacheDir)
@@ -313,13 +312,10 @@ class VulcanRaggedCompare(systemtesting.MantidSystemTest):
         return 3*1024  # GiB
 
     def requiredFiles(self):
-        return [self.cal_file, self.char_file, self.data_file]
+        return [self.cal_file, self.data_file]
 
     def runTest(self):
         self.cacheDir = getCacheDir()
-
-        PDLoadCharacterizations(Filename=self.char_file, OutputWorkspace='characterizations',
-                                SpectrumIDs='1', L2='3.18', Polar='90', Azimuthal='0')
 
         self.wksp_mem = os.path.basename(self.data_file).split('.')[0]
         self.wksp_mem, self.wksp_file = self.wksp_mem + '_mem', self.wksp_mem + '_file'
@@ -327,25 +323,18 @@ class VulcanRaggedCompare(systemtesting.MantidSystemTest):
         # load then process
         LoadEventAndCompress(Filename=self.data_file, OutputWorkspace=self.wksp_mem, MaxChunkSize=16, FilterBadPulses=0)
         LoadDiffCal(Filename=self.cal_file, InputWorkspace=self.wksp_mem, WorkspaceName='PG3')
-        PDDetermineCharacterizations(InputWorkspace=self.wksp_mem, Characterizations='characterizations',
-                                     ReductionProperties='__snspowderreduction_inner')
         AlignAndFocusPowder(InputWorkspace=self.wksp_mem, OutputWorkspace=self.wksp_mem,
                             GroupingWorkspace='PG3_group', CalibrationWorkspace='PG3_cal', MaskWorkspace='PG3_mask',
                             Params=-.0002, CompressTolerance=0.01,
-                            PrimaryFlightPath=60, SpectrumIDs='1', L2='3.18', Polar='90', Azimuthal='0',
-                            ReductionProperties='__snspowderreduction_inner')
-        NormaliseByCurrent(InputWorkspace=self.wksp_mem, OutputWorkspace=self.wksp_mem)
-        ConvertUnits(InputWorkspace=self.wksp_mem, OutputWorkspace=self.wksp_mem, Target='dSpacing')
+                            PrimaryFlightPath=60, SpectrumIDs='1,2,3', L2='3.18,3.18,3.18', Polar='90,270,145', Azimuthal='0,0,0')
 
         # everything inside the algorithm
         AlignAndFocusPowderFromFiles(Filename=self.data_file, OutputWorkspace=self.wksp_file,
                                      GroupingWorkspace='PG3_group', CalibrationWorkspace='PG3_cal',
                                      MaskWorkspace='PG3_mask',
                                      Params=-.0002, CompressTolerance=0.01,
-                                     PrimaryFlightPath=60, SpectrumIDs='1', L2='3.18', Polar='90', Azimuthal='0',
+                                     PrimaryFlightPath=60, SpectrumIDs='1,2,3', L2='3.18,3.18,3.18', Polar='90,270,145', Azimuthal='0,0,0',
                                      ReductionProperties='__snspowderreduction_inner')
-        NormaliseByCurrent(InputWorkspace=self.wksp_file, OutputWorkspace=self.wksp_file)
-        ConvertUnits(InputWorkspace=self.wksp_file, OutputWorkspace=self.wksp_file, Target='dSpacing')
 
     def validateMethod(self):
         self.tolerance = 1.0e-2
