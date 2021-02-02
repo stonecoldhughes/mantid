@@ -124,7 +124,7 @@ std::unordered_map<std::string, ParameterValue>
 IqtFitModel::createDefaultParameters(TableDatasetIndex index) const {
   std::unordered_map<std::string, ParameterValue> parameters;
   parameters["Height"] =
-      ParameterValue(computeHeightApproximation(getFittingFunction()));
+      ParameterValue(computeHeightApproximation(getFitFunction()));
 
   const auto inputWs = getWorkspace(index);
   const auto tau = inputWs ? computeTauApproximation(inputWs) : 0.0;

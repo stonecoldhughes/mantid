@@ -130,5 +130,13 @@ MatrixWorkspace_sptr createWorkspaceWithInstrument(int const &xLength,
   return setWorkspaceProperties(workspace, xLength, yLength);
 }
 
+MatrixWorkspace_sptr
+createWorkspaceWithInelasticInstrument(int const &xLength, int const &yLength) {
+  std::vector<double> L2 = {1.0}, polar = {M_PI_4}, azimuthal = {0.};
+  auto inputWS = WorkspaceCreationHelper::createProcessedInelasticWS(
+      L2, polar, azimuthal, 30, -10, 20, 17.1);
+  return inputWS;
+}
+
 } // namespace IndirectFitDataCreationHelper
 } // namespace Mantid

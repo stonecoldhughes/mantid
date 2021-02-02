@@ -45,10 +45,23 @@ public:
   virtual ~IndirectFittingModel() = default;
 
   // Functions that interact with IndirectFitDataTableModel
+  virtual void addWorkspace(const std::string &workspaceName);
+  void addWorkspace(const std::string &workspaceName,
+                    const std::string &spectra);
+  void addWorkspace(const std::string &workspaceName,
+                    const FunctionModelSpectra &spectra);
+  virtual void addWorkspace(Mantid::API::MatrixWorkspace_sptr workspace,
+                            const FunctionModelSpectra &spectra);
   virtual bool hasWorkspace(std::string const &workspaceName) const;
   virtual Mantid::API::MatrixWorkspace_sptr
   getWorkspace(TableDatasetIndex index) const;
+  virtual void removeWorkspace(TableDatasetIndex index);
+  void setSpectra(const std::string &spectra, TableDatasetIndex dataIndex);
+  void setSpectra(FunctionModelSpectra &&spectra, TableDatasetIndex dataIndex);
+  void setSpectra(const FunctionModelSpectra &spectra,
+                  TableDatasetIndex dataIndex);
   FunctionModelSpectra getSpectra(TableDatasetIndex index) const;
+
   virtual bool isMultiFit() const;
   virtual TableDatasetIndex numberOfWorkspaces() const;
   size_t getNumberOfSpectra(TableDatasetIndex index) const;
@@ -61,43 +74,31 @@ public:
   void clearWorkspaces();
   void clear();
 
-  void setSpectra(const std::string &spectra, TableDatasetIndex dataIndex);
-  void setSpectra(FunctionModelSpectra &&spectra, TableDatasetIndex dataIndex);
-  void setSpectra(const FunctionModelSpectra &spectra,
-                  TableDatasetIndex dataIndex);
-  virtual void addWorkspace(const std::string &workspaceName);
-  void addWorkspace(const std::string &workspaceName,
-                    const std::string &spectra);
-  void addWorkspace(const std::string &workspaceName,
-                    const FunctionModelSpectra &spectra);
-  virtual void addWorkspace(Mantid::API::MatrixWorkspace_sptr workspace,
-                            const FunctionModelSpectra &spectra);
-  virtual void removeWorkspace(TableDatasetIndex index);
-
-  virtual std::pair<double, double>
-  getFittingRange(TableDatasetIndex dataIndex, WorkspaceIndex spectrum) const;
-  virtual std::string getExcludeRegion(TableDatasetIndex dataIndex,
-                                       WorkspaceIndex index) const;
-
   void setStartX(double startX, TableDatasetIndex dataIndex,
                  WorkspaceIndex spectrum);
   virtual void setStartX(double startX, TableDatasetIndex dataIndex);
   void setEndX(double endX, TableDatasetIndex dataIndex,
                WorkspaceIndex spectrum);
   virtual void setEndX(double endX, TableDatasetIndex dataIndex);
+  virtual std::pair<double, double>
+  getFittingRange(TableDatasetIndex dataIndex, WorkspaceIndex spectrum) const;
   void setExcludeRegion(const std::string &exclude, TableDatasetIndex dataIndex,
                         WorkspaceIndex spectrum);
+  virtual std::string getExcludeRegion(TableDatasetIndex dataIndex,
+                                       WorkspaceIndex index) const;
+
 
   // Functions concerned with naming
 
   // IIndirectFittingModel
   bool isPreviouslyFit(TableDatasetIndex dataIndex,
                        WorkspaceIndex spectrum) const override;
+
   virtual boost::optional<std::string> isInvalidFunction() const override;
   std::vector<std::string> getFitParameterNames() const override;
-  virtual Mantid::API::MultiDomainFunction_sptr
-  getFittingFunction() const override;
   void setFitFunction(Mantid::API::MultiDomainFunction_sptr function) override;
+  virtual Mantid::API::MultiDomainFunction_sptr
+  getFitFunction() const override;
   void setDefaultParameterValue(const std::string &name, double value,
                                 TableDatasetIndex dataIndex) override;
   std::unordered_map<std::string, ParameterValue>

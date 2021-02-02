@@ -260,7 +260,7 @@ QString IndirectFitAnalysisTab::getSelectedFitType() const {
  */
 size_t IndirectFitAnalysisTab::getNumberOfCustomFunctions(
     const std::string &functionName) const {
-  auto fittingFunction = m_fittingModel->getFittingFunction();
+  auto fittingFunction = m_fittingModel->getFitFunction();
   if (fittingFunction && fittingFunction->nFunctions() > 0)
     return getNumberOfSpecificFunctionContained(
         functionName, fittingFunction->getFunction(0).get());
@@ -269,7 +269,7 @@ size_t IndirectFitAnalysisTab::getNumberOfCustomFunctions(
 }
 
 void IndirectFitAnalysisTab::setModelFitFunction() {
-  auto func = m_fitPropertyBrowser->getFittingFunction();
+  auto func = m_fitPropertyBrowser->getFitFunction();
   m_fittingModel->setFitFunction(func);
 }
 
@@ -430,7 +430,7 @@ void IndirectFitAnalysisTab::updateParameterValues(
 
 void IndirectFitAnalysisTab::updateFitBrowserParameterValues(
     std::unordered_map<std::string, ParameterValue> params) {
-  IFunction_sptr fun = m_fittingModel->getFittingFunction();
+  IFunction_sptr fun = m_fittingModel->getFitFunction();
   if (fun) {
     for (auto pair : params) {
       fun->setParameter(pair.first, pair.second.value);
@@ -756,7 +756,7 @@ void IndirectFitAnalysisTab::updateDataReferences() {
       static_cast<int>(m_fittingModel->getNumberOfDomains()), getDatasets(),
       m_fittingModel->getQValuesForData(),
       m_fittingModel->getResolutionsForFit());
-  m_fittingModel->setFitFunction(m_fitPropertyBrowser->getFittingFunction());
+  m_fittingModel->setFitFunction(m_fitPropertyBrowser->getFitFunction());
 }
 
 /**

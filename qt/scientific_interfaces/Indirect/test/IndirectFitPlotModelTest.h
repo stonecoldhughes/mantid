@@ -37,7 +37,7 @@ std::string const INPUT_AND_GUESS_NAME = "__QENSInputAndGuess";
 const std::vector<std::pair<std::string, size_t>> exampleResolution(
     1, std::make_pair<std::string, size_t>("irs26173_graphite_002_res", 0));
 
-std::string getFittingFunctionString(std::string const &workspaceName) {
+std::string getFitFunctionString(std::string const &workspaceName) {
   return "name=LinearBackground,A0=0,A1=0,ties=(A0=0.000000,A1=0.0);"
          "(composite=Convolution,FixResolution=true,NumDeriv=true;"
          "name=Resolution,Workspace=" +
@@ -127,7 +127,7 @@ IndirectFittingModel *createModelWithMultipleWorkspaces(
   for (auto name : workspaceNames) {
     addWorkspaceToModel(model, numberOfSpectra, name);
   }
-  setFittingFunction(model, getFittingFunctionString(workspaceNames[0]),
+  setFittingFunction(model, getFitFunctionString(workspaceNames[0]),
                      setFitFunction, numberOfSpectra * workspaceNames.size());
   return model;
 }
@@ -162,9 +162,9 @@ IAlgorithm_sptr setupFitAlgorithm(const MatrixWorkspace_sptr &workspace,
 IAlgorithm_sptr getSetupFitAlgorithm(IndirectFittingModel *model,
                                      const MatrixWorkspace_sptr &workspace,
                                      std::string const &workspaceName) {
-  setFittingFunction(model, getFittingFunctionString(workspaceName), true, 20);
+  setFittingFunction(model, getFitFunctionString(workspaceName), true, 20);
   auto alg = setupFitAlgorithm(std::move(workspace),
-                               getFittingFunctionString(workspaceName));
+                               getFitFunctionString(workspaceName));
   return alg;
 }
 

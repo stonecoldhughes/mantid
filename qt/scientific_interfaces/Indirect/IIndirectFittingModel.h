@@ -29,7 +29,7 @@ public:
                                WorkspaceIndex spectrum) const = 0;
   virtual boost::optional<std::string> isInvalidFunction() const = 0;
   virtual std::vector<std::string> getFitParameterNames() const = 0;
-  virtual Mantid::API::MultiDomainFunction_sptr getFittingFunction() const = 0;
+  virtual Mantid::API::MultiDomainFunction_sptr getFitFunction() const = 0;
   virtual std::unordered_map<std::string, ParameterValue>
   getParameterValues(TableDatasetIndex dataIndex,
                      WorkspaceIndex spectrum) const = 0;

@@ -164,8 +164,7 @@ public:
                      std::string(TableDatasetIndex dataIndex));
   MOCK_CONST_METHOD0(isMultiFit, bool());
   MOCK_CONST_METHOD0(numberOfWorkspaces, TableDatasetIndex());
-  MOCK_CONST_METHOD0(getFittingFunction,
-                     Mantid::API::MultiDomainFunction_sptr());
+  MOCK_CONST_METHOD0(getFitFunction, Mantid::API::MultiDomainFunction_sptr());
 
   MOCK_METHOD3(setStartX, void(double startX, TableDatasetIndex dataIndex,
                                IDA::WorkspaceIndex spectrum));
@@ -419,7 +418,7 @@ public:
 
     ON_CALL(*m_fittingModel, getFittingRange(index, IDA::WorkspaceIndex(0)))
         .WillByDefault(Return(range));
-    ON_CALL(*m_fittingModel, getFittingFunction())
+    ON_CALL(*m_fittingModel, getFitFunction())
         .WillByDefault(Return(fitFunction));
     ON_CALL(*m_fittingModel, getWorkspace(index))
         .WillByDefault(Return(m_ads->retrieveWorkspace(workspaceName)));
@@ -473,7 +472,7 @@ public:
     double const background(1.2);
     auto const fitFunction = getFunctionWithWorkspaceName("WorkspaceName");
 
-    ON_CALL(*m_fittingModel, getFittingFunction())
+    ON_CALL(*m_fittingModel, getFitFunction())
         .WillByDefault(Return(fitFunction));
 
     Expectation setDefault =
@@ -481,9 +480,7 @@ public:
             *m_fittingModel,
             setDefaultParameterValue("A0", background, TableDatasetIndex(0)))
             .Times(1);
-    EXPECT_CALL(*m_fittingModel, getFittingFunction())
-        .Times(1)
-        .After(setDefault);
+    EXPECT_CALL(*m_fittingModel, getFitFunction()).Times(1).After(setDefault);
 
     m_view->emitBackgroundChanged(background);
   }
@@ -537,7 +534,7 @@ public:
   void test_that_updateRangeSelectors_will_update_the_background_selector() {
     auto const fitFunction = getFunctionWithWorkspaceName("WorkspaceName");
 
-    ON_CALL(*m_fittingModel, getFittingFunction())
+    ON_CALL(*m_fittingModel, getFitFunction())
         .WillByDefault(Return(fitFunction));
 
     Expectation setVisible =
@@ -550,7 +547,7 @@ public:
   void test_that_updateRangeSelectors_will_update_the_hwhm_selector() {
     auto const fitFunction = getFunctionWithWorkspaceName("WorkspaceName");
 
-    ON_CALL(*m_fittingModel, getFittingFunction())
+    ON_CALL(*m_fittingModel, getFitFunction())
         .WillByDefault(Return(fitFunction));
 
     Expectation setVisible =

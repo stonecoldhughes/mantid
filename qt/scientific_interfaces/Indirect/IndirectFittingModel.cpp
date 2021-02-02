@@ -393,7 +393,7 @@ std::vector<std::string> IndirectFittingModel::getFitParameterNames() const {
 }
 
 Mantid::API::MultiDomainFunction_sptr
-IndirectFittingModel::getFittingFunction() const {
+IndirectFittingModel::getFitFunction() const {
   return m_activeFunction;
 }
 
@@ -565,7 +565,7 @@ IndirectFittingModel::getDefaultParameters(TableDatasetIndex index) const {
 std::unordered_map<std::string, std::string>
 IndirectFittingModel::mapDefaultParameterNames() const {
   if (m_activeFunction)
-    return shortToLongParameterNames(getFittingFunction());
+    return shortToLongParameterNames(getFitFunction());
   return std::unordered_map<std::string, std::string>();
 }
 
@@ -599,7 +599,7 @@ WorkspaceGroup_sptr IndirectFittingModel::getResultGroup() const {
 
 bool IndirectFittingModel::isPreviousModelSelected() const {
   return m_fitFunction &&
-         equivalentFunctions(extractFirstInnerFunction(getFittingFunction()),
+         equivalentFunctions(extractFirstInnerFunction(getFitFunction()),
                              m_fitFunction);
 }
 
@@ -617,9 +617,9 @@ IndirectFittingModel::getFittingAlgorithm(FittingMode mode) const {
     if (m_activeFunction->getNumberDomains() == 0) {
       throw std::runtime_error("Function is undefined");
     }
-    return createSequentialFit(getFittingFunction());
+    return createSequentialFit(getFitFunction());
   } else
-    return createSimultaneousFit(getFittingFunction());
+    return createSimultaneousFit(getFitFunction());
 }
 
 IAlgorithm_sptr
@@ -642,7 +642,7 @@ IndirectFittingModel::getSingleFit(TableDatasetIndex dataIndex,
 Mantid::API::IFunction_sptr
 IndirectFittingModel::getSingleFunction(TableDatasetIndex dataIndex,
                                         WorkspaceIndex spectrum) const {
-  auto function = getFittingFunction();
+  auto function = getFitFunction();
   assert(function->getNumberDomains() == getNumberOfDomains());
   if (function->getNumberDomains() == 0) {
     throw std::runtime_error("Cannot set up a fit: is the function defined?");
@@ -652,14 +652,14 @@ IndirectFittingModel::getSingleFunction(TableDatasetIndex dataIndex,
 
 Mantid::API::IAlgorithm_sptr
 IndirectFittingModel::sequentialFitAlgorithm() const {
-  auto function = getFittingFunction();
+  auto function = getFitFunction();
   assert(function->getNumberDomains() == getNumberOfDomains());
   return AlgorithmManager::Instance().create("QENSFitSequential");
 }
 
 Mantid::API::IAlgorithm_sptr
 IndirectFittingModel::simultaneousFitAlgorithm() const {
-  auto function = getFittingFunction();
+  auto function = getFitFunction();
   assert(function->getNumberDomains() == getNumberOfDomains());
   return AlgorithmManager::Instance().create("QENSFitSimultaneous");
 }
