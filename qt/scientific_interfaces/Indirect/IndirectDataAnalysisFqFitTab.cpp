@@ -84,7 +84,7 @@ void IndirectDataAnalysisFqFitTab::setupFitTab() {
 }
 
 void IndirectDataAnalysisFqFitTab::updateModelFitTypeString() {
-  m_FqFittingModel->setFitType(getFitTypeString());
+  m_FqFittingModel->setFitTypeString(getFitTypeString());
 }
 
 std::string IndirectDataAnalysisFqFitTab::getFitTypeString() const {
