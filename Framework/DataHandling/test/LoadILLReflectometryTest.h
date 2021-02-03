@@ -137,7 +137,7 @@ public:
   }
 
   void testExecFigaro() {
-    loadSpecific(m_figaroFile, m_outWSName, emptyProperties());
+    loadSpecific(m_figaroDirectBeamFile, m_outWSName, emptyProperties());
   }
 
   void testTOFD17() {
@@ -207,7 +207,7 @@ public:
     MatrixWorkspace_sptr output;
     auto prop = emptyProperties();
     prop.emplace_back("XUnit", "TimeOfFlight");
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, prop);
+    getWorkspaceFor(output, m_figaroDirectBeamFile, m_outWSName, prop);
     TS_ASSERT_EQUALS(output->getAxis(0)->unit()->unitID(), "TOF")
     const auto &run = output->run();
     const auto channelWidth =
@@ -216,12 +216,12 @@ public:
         run.getPropertyValueAsType<double>("PSD.time_of_flight_1"));
     const auto tofDelay =
         run.getPropertyValueAsType<double>("PSD.time_of_flight_2") +
-        run.getPropertyValueAsType<double>("Theta.edelay_delay");
+        run.getPropertyValueAsType<double>("MainParameters.edelay_delay");
     // Using choppers 1 and 4.
     const auto chopper1Speed =
-        run.getPropertyValueAsType<double>("CH1.rotation_speed");
+        run.getPropertyValueAsType<double>("chopper1.rotation_speed");
     const double chopper1Phase{0.}; // The value in NeXus is trash.
-    const auto chopper2Phase = run.getPropertyValueAsType<double>("CH4.phase");
+    const auto chopper2Phase = run.getPropertyValueAsType<double>("chopper2.phase");
     const auto pOffset = run.getPropertyValueAsType<double>("CollAngle.poff");
     const auto openOffset =
         run.getPropertyValueAsType<double>("CollAngle.openOffset");
@@ -240,9 +240,9 @@ public:
     TS_ASSERT_EQUALS(run.getProperty("PSD.time_of_flight_0")->units(), "")
     TS_ASSERT_EQUALS(run.getProperty("PSD.time_of_flight_1")->units(), "")
     TS_ASSERT_EQUALS(run.getProperty("PSD.time_of_flight_2")->units(), "")
-    TS_ASSERT_EQUALS(run.getProperty("Theta.edelay_delay")->units(), "microsec")
-    TS_ASSERT_EQUALS(run.getProperty("CH1.rotation_speed")->units(), "rpm")
-    TS_ASSERT_EQUALS(run.getProperty("CH4.phase")->units(), "degree")
+    TS_ASSERT_EQUALS(run.getProperty("MainParameters.edelay_delay")->units(), "microsec")
+    TS_ASSERT_EQUALS(run.getProperty("chopper1.rotation_speed")->units(), "rpm")
+    TS_ASSERT_EQUALS(run.getProperty("chopper2.phase")->units(), "degree")
     TS_ASSERT_EQUALS(run.getProperty("CollAngle.poff")->units(), "uu")
     TS_ASSERT_EQUALS(run.getProperty("CollAngle.openOffset")->units(), "uu")
   }
@@ -279,7 +279,7 @@ public:
     MatrixWorkspace_sptr output;
     auto prop = emptyProperties();
     prop.emplace_back("Xunit", "TimeOfFlight");
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, prop);
+    getWorkspaceFor(output, m_figaroDirectBeamFile, m_outWSName, prop);
     const auto &run = output->run();
     const auto chopperCentre =
         run.getPropertyValueAsType<double>(
@@ -349,7 +349,7 @@ public:
     auto prop = emptyProperties();
     prop.emplace_back("Measurement", "ReflectedBeam");
     prop.emplace_back("BraggAngle", "1.5");
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, prop);
+    getWorkspaceFor(output, m_figaroReflectedBeamFile, m_outWSName, prop);
     const auto &spectrumInfo = output->spectrumInfo();
     const auto &run = output->run();
     const double centre =
@@ -364,7 +364,7 @@ public:
     MatrixWorkspace_sptr output;
     auto prop = emptyProperties();
     prop.emplace_back("Measurement", "DirectBeam");
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, prop);
+    getWorkspaceFor(output, m_figaroDirectBeamFile, m_outWSName, prop);
     const auto &spectrumInfo = output->spectrumInfo();
     const auto &run = output->run();
     const double centre =
@@ -384,7 +384,7 @@ public:
 
   void testPropertiesFigaro() {
     MatrixWorkspace_sptr output;
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, emptyProperties());
+    getWorkspaceFor(output, m_figaroDirectBeamFile, m_outWSName, emptyProperties());
     commonProperties(output, "FIGARO");
   }
 
@@ -464,7 +464,7 @@ public:
     TS_ASSERT_THROWS_NOTHING(loader.initialize())
     TS_ASSERT(loader.isInitialized())
     TS_ASSERT_THROWS_NOTHING(
-        loader.setPropertyValue("Filename", this->m_figaroFile_2018))
+        loader.setPropertyValue("Filename", this->m_figaroDirectBeamFile))
     TS_ASSERT_THROWS_NOTHING(
         loader.setPropertyValue("OutputWorkspace", this->m_outWSName))
     TS_ASSERT_THROWS_NOTHING(loader.execute())
@@ -536,7 +536,7 @@ public:
 
   void testSlitConfigurationFigaro() {
     MatrixWorkspace_sptr output;
-    getWorkspaceFor(output, m_figaroFile, m_outWSName, emptyProperties());
+    getWorkspaceFor(output, m_figaroDirectBeamFile, m_outWSName, emptyProperties());
     auto instrument = output->getInstrument();
     auto slit1 = instrument->getComponentByName("slit2");
     auto slit2 = instrument->getComponentByName("slit3");
