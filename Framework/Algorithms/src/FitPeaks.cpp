@@ -980,7 +980,6 @@ FitPeaks::fitPeaks() {
     PARALLEL_END_INTERUPT_REGION
   }
   PARALLEL_CHECK_INTERUPT_REGION
-
   return fit_result_vector;
 }
 
@@ -1079,24 +1078,30 @@ void FitPeaks::fitSpectrumPeaks(
 
     double expected_peak_pos = expected_peak_centers[peak_index];
 
-    bool foundAnyPeak = (lastGoodPeakParameters[fit_index].size() >
+    bool foundAnyPeak = (lastGoodPeakParameters[peak_index].size() >
                          static_cast<size_t>(std::count_if(
-                             lastGoodPeakParameters[fit_index].begin(),
-                             lastGoodPeakParameters[fit_index].end(),
+                             lastGoodPeakParameters[peak_index].begin(),
+                             lastGoodPeakParameters[peak_index].end(),
                              [&](auto const &val) { return val <= 1e-10; })));
+    // set initial parameters
+    peakfunction->setCentre(expected_peak_pos);
+    // set matrix workspace so reads necessary params from .xml file
+    peakfunction->setMatrixWorkspace(m_inputMatrixWS, wi, 0.0, 0.0);
+    peakfunction->clearTies(); // let S,A,B of B2B exp be refined
     if (foundAnyPeak) {
-      // set the peak parameters from last good fit to that peak
-      for (size_t i = 0; i < lastGoodPeakParameters[fit_index].size(); ++i) {
-        peakfunction->setParameter(i, lastGoodPeakParameters[fit_index][i]);
+      // want fwhm and height from last good fit, but do not want to overwrite
+      // B2Bexp coef A & B is set
+      // create a new temp peak function with last good fit parameters
+      IPeakFunction_sptr temp_peakfunction =
+          std::dynamic_pointer_cast<API::IPeakFunction>(
+              m_peakFunction->clone());
+      for (size_t i = 0; i < m_peakFunction->nParams(); ++i) {
+        temp_peakfunction->setParameter(i,
+                                        lastGoodPeakParameters[peak_index][i]);
       }
       // reset center though - don't know before hand which element this is
-      peakfunction->setCentre(expected_peak_pos);
-    } else {
-      // set matrix workspace so reads necessary params from .xml file after
-      // need to set center first
-      peakfunction->setCentre(expected_peak_pos);
-      peakfunction->setMatrixWorkspace(m_inputMatrixWS, wi, 0.0, 0.0);
-      peakfunction->clearTies(); // let S,A,B of B2B exp be refined
+      peakfunction->setFwhm(temp_peakfunction->fwhm()); // is just large
+      peakfunction->setHeight(temp_peakfunction->height());
     }
 
     double cost(DBL_MAX);
@@ -1122,10 +1127,6 @@ void FitPeaks::fitSpectrumPeaks(
       cost =
           fitIndividualPeak(wi, peak_fitter, expected_peak_pos, peak_window_i,
                             observe_peak_params, peakfunction, bkgdfunction);
-      if (cost < 1e7) { // assume it worked and save out the result
-        for (size_t i = 0; i < lastGoodPeakParameters[fit_index].size(); ++i)
-          lastGoodPeakParameters[fit_index][i] = peakfunction->getParameter(i);
-      }
     }
 
     // process fitting result
@@ -1135,6 +1136,12 @@ void FitPeaks::fitSpectrumPeaks(
 
     processSinglePeakFitResult(wi, peak_index, cost, expected_peak_centers,
                                fit_function, fit_result); // sets the record
+
+    // save params if good fit
+    if (fit_result->getCost(peak_index) < 1.0e10) {
+      for (size_t i = 0; i < m_peakFunction->nParams(); ++i)
+        lastGoodPeakParameters[peak_index][i] = peakfunction->getParameter(i);
+    }
   }
 
   return;
@@ -1218,6 +1225,7 @@ void FitPeaks::processSinglePeakFitResult(
   // get peak position and analyze the fitting is good or not by various
   // criteria
   double peak_pos = fitfunction.peakfunction->centre();
+  double fwhm = fitfunction.peakfunction->fwhm();
   bool good_fit(false);
   if ((cost < 0) || (cost >= DBL_MAX - 1.) || std::isnan(cost)) {
     // unphysical cost function value
@@ -1237,6 +1245,9 @@ void FitPeaks::processSinglePeakFitResult(
         g_log.debug() << "Peak position " << peak_pos << " is out of fit "
                       << "window boundary " << fitwindow.first << ", "
                       << fitwindow.second << "\n";
+      } else if (fwhm > (fitwindow.second - fitwindow.first)) {
+        // peak too wide or fit window not wide enough
+        peak_pos = -1.5;
       } else
         good_fit = true;
     } else {
@@ -1256,9 +1267,13 @@ void FitPeaks::processSinglePeakFitResult(
       if (left_bound < 0 || right_bound < 0)
         throw std::runtime_error("Code logic error such that left or right "
                                  "boundary of peak position is negative.");
-      if (peak_pos < left_bound || peak_pos > right_bound)
+      if (peak_pos < left_bound || peak_pos > right_bound ||
+          fwhm > (right_bound - left_bound)) {
         peak_pos = -2.5;
-      else
+      } else if (fwhm > (right_bound - left_bound)) {
+        // peak too wide
+        peak_pos = -1.5;
+      } else
         good_fit = true;
     }
   } else if (fabs(fitfunction.peakfunction->centre() -
