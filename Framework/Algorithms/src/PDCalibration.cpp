@@ -664,7 +664,7 @@ void PDCalibration::exec() {
        if (!useChiSq) {
          weights.emplace_back(height * height);
        } else {
-         weights.emplace_back(1/(centre_error * centre_error));
+         weights.emplace_back(1 / (centre_error * centre_error));
        }
        tof_vec_full[peakIndex] = centre;
        width_vec_full[peakIndex] = width;
