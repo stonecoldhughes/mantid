@@ -32,6 +32,7 @@ Bugfixes
 
 Engineering Diffraction
 -----------------------
+- The Engineering Diffraction interface can now be saved as part of a project file, and can save/restore in the event of a crash as part of the general project save system.
 
 Single Crystal Diffraction
 --------------------------
