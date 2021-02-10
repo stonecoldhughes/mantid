@@ -120,9 +120,9 @@ void FitControl::fit() {
     return;
   }
   auto fittingType = m_fitOptionsBrowser->getCurrentFittingType();
-  if (fittingType == MantidWidgets::FittingMode::Simultaneous) {
+  if (fittingType == MantidWidgets::FittingMode::SIMULTANEOUS) {
     fitSimultaneous();
-  } else if (fittingType == MantidWidgets::FittingMode::Sequential) {
+  } else if (fittingType == MantidWidgets::FittingMode::SEQUENTIAL) {
     fitSequential();
   } else {
     throw std::logic_error("Unrecognised fitting type");
